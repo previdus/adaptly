@@ -12,7 +12,7 @@ export type Attempt={skill:number,level:number,correct:boolean,seconds:number,hi
 export type Student={id:string,name:string,attempts:Attempt[]};
 export type Question={skill:number,level:number,a:number,b:number,prompt:string,answer:number,explanation:string,visual?:string};
 const rand=(a:number,b:number)=>Math.floor(Math.random()*(b-a+1))+a;
-export function stats(attempts:Attempt[],skill:number){const all=attempts.filter(x=>x.skill===skill);const recent=all.slice(-10);const independent=recent.filter(x=>!x.hinted);const acc=independent.length?independent.filter(x=>x.correct).length/independent.length:0;return {total:all.length,correct:all.filter(x=>x.correct).length,acc,mastered:independent.length>=8&&acc>=.8,level:Math.min(3,1+Math.floor(all.filter(x=>x.correct&&!x.hinted).length/5)),recent};}
+export function stats(attempts:Attempt[],skill:number){const all=attempts.filter(x=>x.skill===skill);const recent=all.slice(-10);const independent=recent.filter(x=>!x.hinted);const acc=independent.length?independent.filter(x=>x.correct).length/independent.length:0;return {total:all.length,correct:all.filter(x=>x.correct).length,acc,mastered:independent.length>=8&&acc>=.8,level:(()=>{const independent=all.filter(x=>!x.hinted);const current=independent.at(-1)?.level||1;const evidence=independent.filter(x=>x.level===current).slice(-5);const wins=evidence.filter(x=>x.correct).length;return evidence.length>=5&&wins>=4?Math.min(3,current+1):evidence.length>=3&&wins<=1?Math.max(1,current-1):current})(),recent};}
 export function selectSkill(attempts:Attempt[],index:number){if(index<8)return index;const scores=skills.map((_,i)=>({i,s:stats(attempts,i)}));const gaps=scores.filter(x=>!x.s.mastered);return (gaps.length?gaps:scores).sort((a,b)=>(a.s.acc+a.s.total*.015)-(b.s.acc+b.s.total*.015))[0].i;}
 export function budget(attempts:Attempt[],skill:number,level:number){const times=attempts.filter(x=>x.skill===skill&&x.level===level&&x.correct&&!x.hinted).slice(-8).map(x=>x.seconds).sort((a,b)=>a-b);const base=skills[skill].time*(1+(level-1)*.25);return Math.round(times.length>=3?Math.max(base*.65,Math.min(base*2,times[Math.floor(times.length/2)]*1.5)):base);}
 export function generate(skill:number,level:number,previous:string[]=[]):Question{
@@ -32,4 +32,5 @@ export function generate(skill:number,level:number,previous:string[]=[]):Questio
  else explanation=`${a} × ${b} = ${a*b}. ${a>=10?`Split ${a} into ${Math.floor(a/10)*10} + ${a%10}: ${Math.floor(a/10)*10*b} + ${a%10*b} = ${a*b}.`:`Think of ${a} equal groups of ${b}, or count by ${b}, ${a} times.`}`;
  q={skill,level,a,b,prompt,answer:a*b,explanation,visual};tries++;}while(previous.includes(q.prompt)&&tries<80);return q;
 }
+
 
