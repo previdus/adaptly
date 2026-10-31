@@ -4,6 +4,7 @@ import "./game.css";
 import "./adaptly.css";
 import "./rewards.css";
 import "./playground.css";
+import "./level-up.css";
 
 export const metadata: Metadata = {
   title: "Adaptly | Learning that moves with you",
