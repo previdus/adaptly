@@ -12,12 +12,17 @@ export type Attempt={skill:number,level:number,correct:boolean,seconds:number,hi
 export type Progress={stage:number,run:number};
 export type Student={id:string,name:string,attempts:Attempt[],progress?:Progress};
 export function advanceProgress(progress:Progress,attempt:Attempt):Progress{
+ if(progress.stage>=24){const run=attempt.correct&&!attempt.hinted?(progress.run+1)%3:0;return {stage:24,run};}
  const skill=progress.stage%8,level=Math.min(3,1+Math.floor(progress.stage/8));
  if(attempt.skill!==skill||attempt.level!==level)return progress;
  const run=attempt.correct&&!attempt.hinted?progress.run+1:0;
- return run>=3?{stage:progress.stage+1,run:0}:{...progress,run};
+ return run>=3?{stage:Math.min(24,progress.stage+1),run:0}:{...progress,run};
 }
 export function progressFrom(attempts:Attempt[]):Progress{return attempts.reduce(advanceProgress,{stage:0,run:0});}
+export function nextConcept(progress:Progress,attempts:Attempt[]):number{
+ if(progress.stage<24)return progress.stage%8;
+ return skills.findIndex((_,i)=>!stats(attempts,i).mastered||attempts.filter(a=>a.skill===i&&a.level===3&&a.correct&&!a.hinted).length<3);
+}
 export type Question={skill:number,level:number,a:number,b:number,prompt:string,answer:number,explanation:string,visual?:string};
 const rand=(a:number,b:number)=>Math.floor(Math.random()*(b-a+1))+a;
 export function stats(attempts:Attempt[],skill:number){const all=attempts.filter(x=>x.skill===skill);const recent=all.slice(-10);const independent=recent.filter(x=>!x.hinted);const acc=independent.length?independent.filter(x=>x.correct).length/independent.length:0;return {total:all.length,correct:all.filter(x=>x.correct).length,acc,mastered:independent.length>=8&&acc>=.8,level:(()=>{const independent=all.filter(x=>!x.hinted);const current=independent.at(-1)?.level||1;const evidence=independent.filter(x=>x.level===current).slice(-5);const wins=evidence.filter(x=>x.correct).length;return evidence.length>=5&&wins>=4?Math.min(3,current+1):evidence.length>=3&&wins<=1?Math.max(1,current-1):current})(),recent};}

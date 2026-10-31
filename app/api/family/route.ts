@@ -3,10 +3,24 @@ const response=(data:unknown,status=200,cookie?:string)=>Response.json(data,{sta
 const hash=async(s:string)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))).map(x=>x.toString(16).padStart(2,'0')).join('');
 async function passwordHash(password:string,salt:string){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);return Array.from(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},key,256))).map(x=>x.toString(16).padStart(2,'0')).join('');}
 async function family(req:Request){const token=req.headers.get('cookie')?.match(/mq_session=([^;]+)/)?.[1];if(!token)return null;return env.DB!.prepare('SELECT * FROM families WHERE session=? AND expires>?').bind(await hash(token),Date.now()).first<any>();}
-export async function GET(req:Request){try{const f=await family(req);return response(f?{state:JSON.parse(f.state),email:f.email}:{state:null});}catch{return response({error:'Your saved adventure is temporarily unavailable. Please try again.'},503)}}
+async function pilot(req:Request){const token=req.headers.get('cookie')?.match(/adaptly_pilot=([^;]+)/)?.[1];if(!token)return null;return env.DB!.prepare('SELECT p.* FROM pilot_profiles p JOIN pilot_sessions s ON p.id=s.profile_id WHERE s.token=? AND s.expires>?').bind(await hash(token),Date.now()).first<any>();}
+export async function GET(req:Request){try{const p=await pilot(req);const f=p??await family(req);return response(f?{state:JSON.parse(f.state),email:f.email,pilot:!!p}:{state:null});}catch{return response({error:'Your saved adventure is temporarily unavailable. Please try again.'},503)}}
 export async function POST(req:Request){try{
  if(req.headers.get('origin')!==new URL(req.url).origin)return response({error:'Request not allowed'},403);
  const b=await req.json() as any;
+ if(b.action==='identify'){
+  const email=String(b.email||'').trim().toLowerCase(),name=String(b.name||'').trim().slice(0,40);
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||!name)return response({error:'Enter an email and the learner’s name or nickname.'},400);
+  const id=crypto.randomUUID();const legacy=await family(req);const initial=legacy?.email===email?JSON.parse(legacy.state):{students:[{id:crypto.randomUUID(),name,attempts:[]}],active:0};
+  await env.DB!.prepare('INSERT INTO pilot_profiles(id,email,state) VALUES(?,?,?) ON CONFLICT(email) DO NOTHING').bind(id,email,JSON.stringify(initial)).run();
+  const p=await env.DB!.prepare('SELECT * FROM pilot_profiles WHERE email=?').bind(email).first<any>();const state=JSON.parse(p.state);let active=state.students.findIndex((s:any)=>s.name.trim().toLowerCase()===name.toLowerCase());
+  if(active<0){if(state.students.length>=10)return response({error:'This pilot email already has 10 learner profiles. Use an existing learner name.'},400);active=state.students.length;state.students.push({id:crypto.randomUUID(),name,attempts:[]});}
+  state.active=active;await env.DB!.prepare('UPDATE pilot_profiles SET state=? WHERE id=?').bind(JSON.stringify(state),p.id).run();
+  const token=crypto.randomUUID()+crypto.randomUUID();await env.DB!.prepare('INSERT INTO pilot_sessions(token,profile_id,expires) VALUES(?,?,?)').bind(await hash(token),p.id,Date.now()+90*86400000).run();
+  return response({state,email,pilot:true},200,`adaptly_pilot=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=7776000`);
+ }
+ if(b.action==='logout'){const p=await pilot(req);if(p){const token=req.headers.get('cookie')?.match(/adaptly_pilot=([^;]+)/)?.[1];await env.DB!.prepare('DELETE FROM pilot_sessions WHERE token=?').bind(await hash(token!)).run();return response({ok:true},200,'adaptly_pilot=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');}}
+ if(b.action==='save'){const p=await pilot(req);if(p){if(JSON.stringify(b.state).length>800000||!Array.isArray(b.state?.students)||b.state.students.length>10)return response({error:'Invalid progress data'},400);await env.DB!.prepare('UPDATE pilot_profiles SET state=? WHERE id=?').bind(JSON.stringify(b.state),p.id).run();return response({ok:true});}}
  if(b.action==='logout'){const f=await family(req);if(f)await env.DB!.prepare('UPDATE families SET session=NULL,expires=NULL WHERE id=?').bind(f.id).run();return response({ok:true},200,'mq_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');}
  if(b.action==='save'){const f=await family(req);if(!f)return response({error:'Please sign in again to save.'},401);if(JSON.stringify(b.state).length>800000||!Array.isArray(b.state?.students)||b.state.students.length>10)return response({error:'Invalid progress data'},400);await env.DB!.prepare('UPDATE families SET state=? WHERE id=?').bind(JSON.stringify(b.state),f.id).run();return response({ok:true});}
  const email=String(b.email||'').trim().toLowerCase();const pw=String(b.password||'');if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||pw.length<10||pw.length>128)return response({error:'Use a valid parent email and a password of 10–128 characters.'},400);
