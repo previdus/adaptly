@@ -3,3 +3,4 @@
 @media(max-width:760px){.game-chooser-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.chooser-level{grid-column:1/-1}}
 @media(max-width:650px){.chooser-level{grid-column:auto}}
 @media(max-width:650px){.game-chooser-grid{grid-template-columns:1fr}.chooser-level{grid-column:auto}}
+.game-chooser-heading{display:block;text-align:left}.game-chooser-heading .game-chooser-kicker{margin-bottom:8px}.game-chooser-heading h1{margin:7px 0 5px}.game-chooser-heading p{max-width:640px;line-height:1.55}
