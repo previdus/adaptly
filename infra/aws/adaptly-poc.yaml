@@ -1,0 +1,166 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Adaptly proof-of-concept host in us-east-1. Data is stored in local D1 on encrypted EBS.
+
+Resources:
+  AdaptlyInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AdaptlyPocInstanceRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: app
+          Value: Adaptly
+
+  AdaptlyInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: AdaptlyPocInstanceProfile
+      Roles:
+        - !Ref AdaptlyInstanceRole
+
+  AdaptlyWebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: adaptly-poc-web
+      GroupDescription: Allow CloudFront origin traffic to Adaptly; administer through Systems Manager.
+      VpcId: vpc-079f494515464ffc2
+      SecurityGroupIngress:
+        - Description: HTTP from CloudFront origin-facing addresses only
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourcePrefixListId: pl-3b927c52
+      Tags:
+        - Key: Name
+          Value: adaptly-poc-web
+        - Key: app
+          Value: Adaptly
+
+  AdaptlyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}"
+      InstanceType: t3.medium
+      IamInstanceProfile: !Ref AdaptlyInstanceProfile
+      SecurityGroupIds:
+        - !GetAtt AdaptlyWebSecurityGroup.GroupId
+      MetadataOptions:
+        HttpTokens: required
+        HttpEndpoint: enabled
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+            Encrypted: true
+            DeleteOnTermination: false
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          dnf install -y docker nginx git
+          systemctl enable --now docker nginx
+          mkdir -p /opt/adaptly /var/lib/adaptly/state
+          git clone --depth 1 --branch main https://github.com/previdus/adaptly.git /opt/adaptly
+          docker build -f /opt/adaptly/Dockerfile.aws-poc -t adaptly-poc:latest /opt/adaptly
+          docker run -d --name adaptly-poc --restart unless-stopped -p 127.0.0.1:8787:8787 -v /var/lib/adaptly/state:/var/lib/adaptly/state adaptly-poc:latest
+          cat >/etc/nginx/conf.d/adaptly.conf <<'NGINX'
+          server {
+              listen 80 default_server;
+              server_name _;
+              client_max_body_size 2m;
+              location / {
+                  proxy_pass http://127.0.0.1:8787;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Forwarded-Host $host;
+                  proxy_set_header X-Forwarded-Proto $http_cloudfront_forwarded_proto;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_read_timeout 120s;
+              }
+          }
+          NGINX
+          nginx -t
+          systemctl reload nginx
+      Tags:
+        - Key: Name
+          Value: adaptly-poc
+        - Key: app
+          Value: Adaptly
+        - Key: managed-by
+          Value: CloudFormation
+
+  AdaptlyElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref AdaptlyInstance
+      Tags:
+        - Key: Name
+          Value: adaptly-poc-origin
+        - Key: app
+          Value: Adaptly
+
+  AdaptlyDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Adaptly multiplication learning POC
+        Enabled: true
+        HttpVersion: http2and3
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: AdaptlyOrigin
+            DomainName: !GetAtt AdaptlyInstance.PublicDnsName
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+              OriginSslProtocols:
+                - TLSv1.2
+              OriginReadTimeout: 120
+        DefaultCacheBehavior:
+          TargetOriginId: AdaptlyOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - PATCH
+            - POST
+            - DELETE
+          CachedMethods:
+            - GET
+            - HEAD
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+          OriginRequestPolicyId: 33f36d7e-f396-46d9-90e0-41c4e7a0f880
+          Compress: true
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+Outputs:
+  InstanceId:
+    Description: Adaptly EC2 instance ID
+    Value: !Ref AdaptlyInstance
+  OriginPublicDns:
+    Description: Stable EC2 public DNS name for the CloudFront origin
+    Value: !GetAtt AdaptlyInstance.PublicDnsName
+  OriginPublicIp:
+    Description: Adaptly origin public IP
+    Value: !Ref AdaptlyElasticIp
+  SecurityGroupId:
+    Description: Adaptly origin security group
+    Value: !Ref AdaptlyWebSecurityGroup
+  AppUrl:
+    Description: HTTPS URL for the Adaptly POC
+    Value: !Sub "https://${AdaptlyDistribution.DomainName}"

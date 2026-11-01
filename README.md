@@ -33,4 +33,8 @@ npm run build
 
 The current app uses Vinext with a Cloudflare Workers runtime and D1 storage. The live site and its database are managed separately from this source repository. Learner records, family profiles, sign-in sessions, and live arena matches are not included here. Keep database exports and local environment files out of source control.
 
-The AWS deployment is a separate migration: the worker runtime and D1-backed routes need an AWS-compatible runtime and data store before this source can run on AWS.
+## AWS proof of concept
+
+`infra/aws/adaptly-poc.yaml` provisions a small EC2 host behind CloudFront. `Dockerfile.aws-poc` runs the existing Worker app with Wrangler's local D1 emulator, storing its SQLite state on an encrypted EBS volume. CloudFront provides HTTPS and sends app traffic to the origin; the origin security group accepts traffic from CloudFront only. This preserves the current app behavior for a pilot without rewriting its APIs.
+
+This is a single-host proof of concept, not a high-availability production setup or a managed AWS database. Learner records are deliberately excluded from GitHub and must be migrated separately into the persistent D1 state on the AWS host.
