@@ -1,4 +1,5 @@
 'use client';
+import React from 'react';
 import {useEffect,useState,type CSSProperties,type FormEvent} from 'react';
 import {X,Pause,Play,Volume2,VolumeX,Lightbulb,Check} from 'lucide-react';
 import type {Attempt,Question} from '../lib/learning';
@@ -27,7 +28,7 @@ export default function PlayArena(p:Props){
    <button className="play-hint" disabled={!!p.result||p.paused} onClick={()=>{setHintOpen(true);p.onHint()}}><Lightbulb size={16}/> {p.hint?'Show my hint':'Need a hint?'}</button>
    </article>
   </div>
-  <footer className="reward-dock" aria-label={p.levelUp?'Next level unlocked':`${p.run} of three stars collected`}><div className="reward-message"><strong>{p.levelUp?'New level unlocked!':p.run===2?'One more star!':p.run===1?'Two stars to go!':'Let’s collect 3 stars!'}</strong><span>{p.levelUp?'Adventure, here we come!':p.level>=24?'Reach Mastered':`Unlock level ${p.level+1}`}</span></div><div className="reward-collection">{[0,1,2].map(i=><span className={'reward-star '+(i<wins?'won':'')} key={i}>★</span>)}<span className={'reward-chest '+(wins===3?'chest-open':'')}>{wins===3?'🎉':'🎁'}</span></div><div className="reward-saved">{p.demo?'Demo adventure':p.saveStatus||'Your adventure is saved as you go'}</div></footer>
+  <footer className="reward-dock" aria-label={`${wins} of three independent answers toward the next level`}><div className="reward-message"><strong>{p.levelUp?'New level unlocked!':p.run===2?'One more star!':p.run===1?'Two stars to go!':'Next level trail'}</strong><span>{p.levelUp?'Adventure, here we come!':p.level>=24?'Reach Mastered':`Level ${p.level} → ${p.level+1}`}</span></div><div className="reward-collection" aria-label={`${wins} of 3 stars`}><strong className="streak-count">{wins}<i>/3</i></strong><div className="streak-path">{[0,1,2].map(i=><React.Fragment key={i}><span className={'trail-star '+(i<wins?'trail-star-done':i===wins?'trail-star-next':'trail-star-wait')} aria-label={i<wins?`step ${i+1} complete`:i===wins?`step ${i+1} next`:`step ${i+1} ahead`}>{i<wins?'★':i===wins?'✦':'☆'}</span>{i<2&&<i className={'trail-link '+(i<wins?'trail-link-done':'')}/>}</React.Fragment>)}</div><span className={'reward-chest '+(wins===3?'chest-open':'')}>{wins===3?'🎉':'🎁'}</span></div><div className="reward-saved">{p.demo?'Demo adventure':p.saveStatus||'Your adventure is saved as you go'}</div></footer>
   {p.result?.correct&&<Celebration correctAnswers={p.stars/10} name={p.name} levelUp={p.levelUp} mastered={p.mastered} nextLevel={Math.min(24,p.levelUp?p.level+1:p.level)}/>}
  </section>
 }
