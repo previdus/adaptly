@@ -5,7 +5,17 @@ const hash=async(s:string)=>Array.from(new Uint8Array(await crypto.subtle.digest
 async function passwordHash(password:string,salt:string){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);return Array.from(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},key,256))).map(x=>x.toString(16).padStart(2,'0')).join('');}
 async function family(req:Request){const token=req.headers.get('cookie')?.match(/mq_session=([^;]+)/)?.[1];if(!token)return null;return env.DB!.prepare('SELECT * FROM families WHERE session=? AND expires>?').bind(await hash(token),Date.now()).first<any>();}
 async function pilot(req:Request){const token=req.headers.get('cookie')?.match(/adaptly_pilot=([^;]+)/)?.[1];if(!token)return null;return env.DB!.prepare('SELECT p.* FROM pilot_profiles p JOIN pilot_sessions s ON p.id=s.profile_id WHERE s.token=? AND s.expires>?').bind(await hash(token),Date.now()).first<any>();}
-export async function GET(req:Request){try{const p=await pilot(req);const f=p??await family(req);return response(f?{state:JSON.parse(f.state),email:f.email,pilot:!!p}:{state:null});}catch{return response({error:'Your saved adventure is temporarily unavailable. Please try again.'},503)}}
+function readSavedState(raw:string):{state:any;repaired:boolean}{
+ try{return{state:JSON.parse(raw),repaired:false};}catch{}
+ // A bounded data export can end in the middle of the final answer. Keep all
+ // fully written attempts and discard only that incomplete trailing attempt.
+ const marker=raw.indexOf('[truncated');if(marker<0)throw new Error('Saved learner progress is not valid JSON');
+ const prefix=raw.slice(0,marker);let inString=false,escaped=false;const stack:string[]=[],commas:number[]=[];
+ for(let i=0;i<prefix.length;i++){const c=prefix[i];if(inString){if(escaped)escaped=false;else if(c==='\\')escaped=true;else if(c==='"')inString=false;continue;}if(c==='"'){inString=true;continue;}if(c==='{'||c==='[')stack.push(c);else if(c==='}'||c===']')stack.pop();else if(c===','&&stack.join('')==='{[{[')commas.push(i);}
+ for(let i=commas.length-1;i>=0;i--){try{const state=JSON.parse(prefix.slice(0,commas[i])+']}]}' );if(Array.isArray(state?.students)&&state.students.every((s:any)=>Array.isArray(s?.attempts)))return{state,repaired:true};}catch{}}
+ throw new Error('Saved learner progress could not be repaired');
+}
+export async function GET(req:Request){try{const p=await pilot(req);const f=p??await family(req);if(!f)return response({state:null});const saved=readSavedState(f.state);if(saved.repaired)await env.DB!.prepare(`UPDATE ${p?'pilot_profiles':'families'} SET state=? WHERE id=?`).bind(JSON.stringify(saved.state),f.id).run();return response({state:saved.state,email:f.email,pilot:!!p});}catch{return response({error:'Your saved adventure is temporarily unavailable. Please try again.'},503)}}
 export async function POST(req:Request){try{
  if(!isSameOriginRequest(req))return response({error:'Request not allowed'},403);
  const b=await req.json() as any;
@@ -14,7 +24,7 @@ export async function POST(req:Request){try{
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||!name)return response({error:'Enter an email and the learner’s name or nickname.'},400);
   const id=crypto.randomUUID();const legacy=await family(req);const initial=legacy?.email===email?JSON.parse(legacy.state):{students:[{id:crypto.randomUUID(),name,attempts:[]}],active:0};
   await env.DB!.prepare('INSERT INTO pilot_profiles(id,email,state) VALUES(?,?,?) ON CONFLICT(email) DO NOTHING').bind(id,email,JSON.stringify(initial)).run();
-  const p=await env.DB!.prepare('SELECT * FROM pilot_profiles WHERE email=?').bind(email).first<any>();const state=JSON.parse(p.state);let active=state.students.findIndex((s:any)=>s.name.trim().toLowerCase()===name.toLowerCase());
+  const p=await env.DB!.prepare('SELECT * FROM pilot_profiles WHERE email=?').bind(email).first<any>();const saved=readSavedState(p.state);const state=saved.state;let active=state.students.findIndex((s:any)=>s.name.trim().toLowerCase()===name.toLowerCase());
   if(active<0){if(state.students.length>=10)return response({error:'This pilot email already has 10 learner profiles. Use an existing learner name.'},400);active=state.students.length;state.students.push({id:crypto.randomUUID(),name,attempts:[]});}
   state.active=active;await env.DB!.prepare('UPDATE pilot_profiles SET state=? WHERE id=?').bind(JSON.stringify(state),p.id).run();
   const token=crypto.randomUUID()+crypto.randomUUID();await env.DB!.prepare('INSERT INTO pilot_sessions(token,profile_id,expires) VALUES(?,?,?)').bind(await hash(token),p.id,Date.now()+90*86400000).run();
