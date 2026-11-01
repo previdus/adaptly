@@ -1,4 +1,5 @@
 import {env} from 'cloudflare:workers';
+import {isSameOriginRequest} from '../../../lib/request-origin';
 const response=(data:unknown,status=200,cookie?:string)=>Response.json(data,{status,headers:{'Cache-Control':'no-store',...(cookie?{'Set-Cookie':cookie}:{})}});
 const hash=async(s:string)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))).map(x=>x.toString(16).padStart(2,'0')).join('');
 async function passwordHash(password:string,salt:string){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);return Array.from(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},key,256))).map(x=>x.toString(16).padStart(2,'0')).join('');}
@@ -6,7 +7,7 @@ async function family(req:Request){const token=req.headers.get('cookie')?.match(
 async function pilot(req:Request){const token=req.headers.get('cookie')?.match(/adaptly_pilot=([^;]+)/)?.[1];if(!token)return null;return env.DB!.prepare('SELECT p.* FROM pilot_profiles p JOIN pilot_sessions s ON p.id=s.profile_id WHERE s.token=? AND s.expires>?').bind(await hash(token),Date.now()).first<any>();}
 export async function GET(req:Request){try{const p=await pilot(req);const f=p??await family(req);return response(f?{state:JSON.parse(f.state),email:f.email,pilot:!!p}:{state:null});}catch{return response({error:'Your saved adventure is temporarily unavailable. Please try again.'},503)}}
 export async function POST(req:Request){try{
- if(req.headers.get('origin')!==new URL(req.url).origin)return response({error:'Request not allowed'},403);
+ if(!isSameOriginRequest(req))return response({error:'Request not allowed'},403);
  const b=await req.json() as any;
  if(b.action==='identify'){
   const email=String(b.email||'').trim().toLowerCase(),name=String(b.name||'').trim().slice(0,40);
