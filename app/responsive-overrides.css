@@ -1,0 +1,43 @@
+/* Adaptly does not render the legacy sidebar, so give its workspace the full
+   viewport width and let each game own its fluid maximum width. */
+.adaptly-shell{width:100%;min-width:0;overflow-x:clip}
+.adaptly-shell>.workspace{width:100%;min-width:0;margin-left:0}
+.adaptly-shell .topbar{width:100%;max-width:1240px;padding-inline:clamp(14px,3.2vw,42px)}
+.adaptly-shell .workspace main{box-sizing:border-box;width:100%;max-width:1600px;min-width:0;margin-inline:auto;padding:clamp(18px,3vw,42px) clamp(14px,3.4vw,48px) 30px}
+.adaptly-shell .topic-page{width:100%;max-width:1000px;margin-inline:auto}
+.adaptly-shell .game-chooser{width:100%;min-width:0;max-width:none}
+.adaptly-shell .game-chooser-grid>*{min-width:0}
+.adaptly-shell .chooser-card strong,.adaptly-shell .chooser-card em,.adaptly-shell .chooser-short-copy{overflow-wrap:anywhere}
+.adaptly-shell .arena-hub,.adaptly-shell .sprint-shell{box-sizing:border-box;width:100%;max-width:1100px;min-width:0;margin-inline:auto}
+.adaptly-shell .arena-live-layout,.adaptly-shell .sprint-game-grid,.adaptly-shell .arena-lobby-grid{min-width:0}
+.adaptly-shell .report-table,.adaptly-shell .table-scroll{max-width:100%;min-width:0}
+@media(max-width:900px){
+ .adaptly-shell .workspace main{padding-inline:clamp(16px,3vw,28px)}
+ .adaptly-shell .topbar{padding-inline:clamp(16px,3vw,28px)}
+ .adaptly-shell .report-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+ .adaptly-shell .workspace main{padding:16px 12px 24px}
+ .adaptly-shell .topbar{height:64px;padding-inline:14px}
+ .adaptly-shell .top-actions{gap:clamp(7px,2.3vw,13px)}
+ .adaptly-shell .parent-nav span{display:none}
+ .adaptly-shell .report-bottom{grid-template-columns:minmax(0,1fr)}
+ .adaptly-shell .report-metrics{gap:9px}
+ .adaptly-shell .report-metrics>div{min-width:0;padding:clamp(11px,3vw,18px)}
+ .adaptly-shell .page-heading{align-items:flex-start;flex-wrap:wrap}
+ .adaptly-shell .topic-page{margin-top:0}
+}
+@media(max-width:380px){
+ .adaptly-shell .workspace main{padding-inline:9px}
+ .adaptly-shell .topbar{padding-inline:10px}
+ .adaptly-shell .adaptly-brand{gap:6px;font-size:20px}
+ .adaptly-shell .top-actions{gap:6px}
+ .adaptly-shell .iconbutton{padding:4px}
+ .adaptly-shell .avatar{width:32px;height:32px}
+ .adaptly-shell .game-chooser{padding-inline:11px}
+ .adaptly-shell .game-chooser-heading h1{font-size:28px}
+ .adaptly-shell .chooser-card{column-gap:8px}
+}
+@media(prefers-reduced-motion:reduce){.adaptly-shell *, .adaptly-shell *:before,.adaptly-shell *:after{scroll-behavior:auto!important}}
+@media(max-width:650px){.adaptly-shell .arena-live-heading{align-items:flex-start}.adaptly-shell .arena-live-heading>div{flex:1;min-width:0}.adaptly-shell .arena-live-heading h1{max-width:none;font-size:clamp(20px,6.2vw,26px);overflow-wrap:anywhere}.adaptly-shell .arena-heart-count{flex:0 0 auto}.adaptly-shell .arena-final-row{grid-template-columns:24px minmax(0,1fr) 38px 54px;gap:5px}.adaptly-shell .arena-final-row b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+@media(max-width:360px){.adaptly-shell .game-chooser-heading h1{font-size:26px}.adaptly-shell .game-chooser-heading p{font-size:9px}.adaptly-shell .arena-question-panel{padding-inline:10px}.adaptly-shell .arena-question-copy{padding-inline:28px 40px}.adaptly-shell .arena-question-copy h2{font-size:22px}.adaptly-shell .arena-live-heading{gap:5px}.adaptly-shell .arena-heart-count{padding:7px}.adaptly-shell .arena-final-row{grid-template-columns:21px minmax(0,1fr) 34px 49px;gap:3px}}
