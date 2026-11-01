@@ -112,9 +112,10 @@ Resources:
 
   AdaptlyDistribution:
     Type: AWS::CloudFront::Distribution
+    DependsOn: AdaptlyElasticIp
     Properties:
       DistributionConfig:
-        Comment: Adaptly multiplication learning POC
+        Comment: Adaptly multiplication learning POC stable EIP origin
         Enabled: true
         HttpVersion: http2and3
         PriceClass: PriceClass_100
