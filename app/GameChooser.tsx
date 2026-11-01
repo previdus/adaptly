@@ -1,0 +1,13 @@
+'use client';
+import {ArrowRight,ChevronRight,Heart,Timer,Users} from 'lucide-react';
+import './game-chooser.css';
+type Props={level:number;rank:string;percent:number;mastered:boolean;onLevelUp:()=>void;onSprint:()=>void;onArena:()=>void;onDetails:()=>void};
+export default function GameChooser({level,rank,percent,mastered,onLevelUp,onSprint,onArena,onDetails}:Props){return <section className="game-chooser" aria-labelledby="multiply-quest-title">
+ <header className="game-chooser-heading"><span className="game-chooser-kicker">✦ MULTIPLY QUEST · YOUR ARCADE ✦</span><h1 id="multiply-quest-title">Choose your way to play</h1><p>Find your level, race the clock, or take on your friends.</p></header>
+ <div className="game-chooser-grid">
+  <button className="chooser-card chooser-level" onClick={onLevelUp}><span className="chooser-art"><span className="chooser-plant">🌱</span><span className="chooser-spark">✦</span><span className="chooser-multiply">×</span></span><span className="chooser-label">ADAPTIVE · YOUR PATH</span><strong>Level Up</strong><em>Find your level</em><span className="chooser-progress-label">{mastered?'Mastered':`Level ${level} of 24`} <i>· {rank}</i></span><span className="chooser-track" role="progressbar" aria-label="Progress through Multiply Quest" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percent)}><i style={{width:`${percent}%`}}/></span><span className="chooser-cta">Continue your journey <ArrowRight size={16}/></span></button>
+  <button className="chooser-card chooser-sprint" onClick={onSprint}><span className="chooser-art"><span className="chooser-sprint-emoji">🚀</span><span className="chooser-clock">60s</span><span className="chooser-multiply">★</span></span><span className="chooser-label">SOLO · PERSONAL BEST</span><strong>Speed Sprint</strong><em>Race against time</em><span className="chooser-short-copy">How many can you solve in one minute?</span><span className="chooser-cta">Start a sprint <ArrowRight size={16}/></span></button>
+  <button className="chooser-card chooser-arena" onClick={onArena}><span className="chooser-art"><span className="chooser-bolt">⚡</span><span className="chooser-hearts">♥ ♥ ♥</span><span className="chooser-multiply">×</span></span><span className="chooser-label">2–8 PLAYERS · LIVE</span><strong>Last Star Standing</strong><em>Compete with friends</em><span className="chooser-short-copy"><Users size={14}/> Be quickest correct to save a life.</span><span className="chooser-cta">Enter the arena <ArrowRight size={16}/></span></button>
+ </div>
+ <button className="chooser-details" onClick={onDetails}>Grown-up guide · What Multiply Quest covers <ChevronRight size={15}/></button>
+</section>}
