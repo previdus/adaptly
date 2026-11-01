@@ -123,10 +123,7 @@ Resources:
             DomainName: !GetAtt AdaptlyInstance.PublicDnsName
             CustomOriginConfig:
               HTTPPort: 80
-              HTTPSPort: 443
               OriginProtocolPolicy: http-only
-              OriginSslProtocols:
-                - TLSv1.2
               OriginReadTimeout: 120
         DefaultCacheBehavior:
           TargetOriginId: AdaptlyOrigin
