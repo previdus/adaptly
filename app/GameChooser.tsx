@@ -34,7 +34,7 @@ export default function GameChooser({level,rank,percent,mastered,run,attempts,fo
   ['arena','⚡','2–8 PLAYERS · LIVE','Compete with friends','3 hearts each']
  ];
  return <section className="game-chooser" aria-labelledby="multiply-quest-title">
-  <header className="game-chooser-heading"><span className="game-chooser-kicker">✦ MULTIPLY QUEST · YOUR ARCADE ✦</span><h1 id="multiply-quest-title">Choose your way to play</h1><p>Find your level, race the clock, or take on your friends.</p></header>
+  <header className="game-chooser-heading"><span className="game-chooser-kicker">✦ MULTIPLY QUEST · YOUR ARCADE ✦</span><h1 id="multiply-quest-title">Choose your way to play</h1><p>Questions adapt to each child. Play for speed or friendly competition.</p></header>
   <div className="game-chooser-grid">
    {cards.map(([game,emoji,label,subtitle,meta])=><article key={game} className={`chooser-card chooser-${game}`} onMouseEnter={()=>hoverCard(game)} onMouseLeave={leaveCard}>
     <button type="button" className="chooser-play" onClick={launch[game]} onFocus={e=>focusIntro(e,game)} aria-label={`Play ${gameNames[game]}`}>
