@@ -1,5 +1,5 @@
 'use client';
-import {ArrowRight,BarChart3,Brain,Clock3,Flame,Heart,Medal,Users,Zap} from 'lucide-react';
+import {ArrowRight,BarChart3,Clock3,Flame,Heart,Medal,Sparkles,Users,Zap} from 'lucide-react';
 import './adaptive-story.css';
 
 function PaceRoad(){return <div className="story-pace-art" aria-hidden="true">
@@ -24,11 +24,15 @@ function CarryReport(){return <div className="story-report-art" aria-label="Illu
  </div>}
 
 export default function AdaptiveStory(){return <section className="adaptive-story" aria-labelledby="adaptive-story-title">
- <header className="story-heading"><div><span className="story-eyebrow"><Brain size={14}/> THE ADAPTLY WAY</span><h2 id="adaptive-story-title">One goal. A path that fits.</h2><p>Across six maths topics, learning grows one personal next step at a time.</p></div><PaceRoad/></header>
+ <header className="story-heading"><div><span className="story-eyebrow"><Sparkles size={14}/> LEARNING THAT FITS EACH CHILD</span><h2 id="adaptive-story-title">Why Adaptly?</h2><p>Questions meet each child where they are. Grown-ups see what’s clicking and what needs practice—then playful challenges turn progress into confidence.</p></div><PaceRoad/></header>
  <div className="story-chapters">
   <article className="story-chapter chapter-pace"><span className="chapter-number">01 <i>PACE</i></span><QuestionSteps/><h3>Every child moves differently.</h3><p>Some click in 2 minutes. Others need 20. Questions follow their understanding—not the class clock.</p><div className="chapter-takeaway"><Clock3 size={15}/> No one-size-fits-all pace</div></article>
   <article className="story-chapter chapter-focus"><span className="chapter-number">02 <i>FOCUS</i></span><CarryReport/><h3>Find the sticky step.</h3><p>If carrying is tricky in addition, more practice returns to that skill. A short lesson can help—then it’s back to trying.</p><div className="chapter-takeaway"><Zap size={15}/> Growth by concept, not guesswork</div></article>
   <article className="story-chapter chapter-grownups"><span className="chapter-number">03 <i>CLARITY</i></span><div className="story-adult-art"><div className="adult-person parent-person"><span>👩‍🏫</span><b>TEACHER</b></div><div className="adult-board"><span>THE NEXT STEP</span><div><i>✓</i><b>Concept strengths</b></div><div><i>↗</i><b>Where to focus</b></div><div><i>★</i><b>Accuracy & evidence</b></div></div><div className="adult-person family-person"><span>👨‍👧</span><b>PARENT</b></div></div><h3>Grown-ups see where to help.</h3><p>Parents and teachers get a clear view of each concept: what’s steady, what needs practice, and what to try next.</p><div className="chapter-takeaway"><Heart size={15}/> A kinder, clearer next step</div></article>
  </div>
- <footer className="story-play-bridge"><div className="play-bridge-heading"><span>UNDERSTAND <ArrowRight size={14}/> MASTER <ArrowRight size={14}/> PLAY</span><b>Learning that builds beyond the lesson.</b></div><div className="play-benefits"><div><span className="benefit-icon benefit-level"><Medal size={19}/></span><span><b>Level Up</b><small>Measure & master</small></span></div><div><span className="benefit-icon benefit-speed"><Flame size={19}/></span><span><b>Speed Sprint</b><small>Speed & accuracy</small></span></div><div><span className="benefit-icon benefit-friends"><Users size={19}/></span><span><b>Last Star Standing</b><small>Friendly peer challenge</small></span></div></div><p>Learn at your pace. Race when you’re ready.</p></footer>
+ <footer className="story-play-bridge" aria-label="Three ways to grow with Adaptly"><div className="play-bridge-heading"><span>THREE WAYS TO GROW</span><b>Learn it. Get quicker. Play together.</b></div><ol className="story-game-path">
+  <li className="game-path-level"><span className="game-path-icon"><Medal size={20}/></span><span className="game-path-copy"><b>Level Up</b><small>Master skills at your own pace</small></span><span className="game-path-arrow" aria-hidden="true"><ArrowRight size={18}/></span></li>
+  <li className="game-path-sprint"><span className="game-path-icon"><Flame size={20}/></span><span className="game-path-copy"><b>Speed Sprint</b><small>Build speed and accuracy</small></span><span className="game-path-arrow" aria-hidden="true"><ArrowRight size={18}/></span></li>
+  <li className="game-path-arena"><span className="game-path-icon"><Users size={20}/></span><span className="game-path-copy"><b>Last Star Standing</b><small>Compete with friends. Stay sharp under pressure. Learn from peers.</small></span></li>
+ </ol><p>Learn at your pace. Race when you’re ready.</p></footer>
  </section>}
