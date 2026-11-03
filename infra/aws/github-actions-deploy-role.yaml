@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Short-lived GitHub Actions role for deploying the Adaptly POC through Systems Manager.
+
+Parameters:
+  ExistingGitHubOidcProviderArn:
+    Type: String
+    Default: ""
+    Description: Leave blank to create GitHub's OIDC provider, or supply its ARN if the account already has it.
+
+Conditions:
+  CreateGitHubOidcProvider: !Equals [!Ref ExistingGitHubOidcProviderArn, ""]
+
+Resources:
+  GitHubActionsOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateGitHubOidcProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      Tags:
+        - Key: app
+          Value: Adaptly
+
+  AdaptlyGitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AdaptlyGitHubActionsDeployRole
+      Description: Deploys the Adaptly main branch to the single tagged POC host through SSM.
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !If
+                - CreateGitHubOidcProvider
+                - !Ref GitHubActionsOidcProvider
+                - !Ref ExistingGitHubOidcProviderArn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: repo:previdus/adaptly:ref:refs/heads/main
+      Policies:
+        - PolicyName: DeployAdaptlyPocThroughSsm
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: FindAdaptlyInstance
+                Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                Resource: "*"
+              - Sid: RunOnlyTheDeploymentDocument
+                Effect: Allow
+                Action:
+                  - ssm:SendCommand
+                Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}::document/AWS-RunShellScript
+              - Sid: RunCommandsOnlyOnTheAdaptlyHost
+                Effect: Allow
+                Action:
+                  - ssm:SendCommand
+                Resource: !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+                Condition:
+                  StringEquals:
+                    ssm:resourceTag/app: Adaptly
+                    ssm:resourceTag/Name: adaptly-poc
+              - Sid: ReadDeploymentCommandStatus
+                Effect: Allow
+                Action:
+                  - ssm:GetCommandInvocation
+                Resource: "*"
+      Tags:
+        - Key: app
+          Value: Adaptly
+        - Key: managed-by
+          Value: CloudFormation
+
+Outputs:
+  RoleArn:
+    Description: Set this as the GitHub repository Actions variable AWS_ROLE_TO_ASSUME.
+    Value: !GetAtt AdaptlyGitHubDeployRole.Arn
+  GitHubRepository:
+    Description: The only GitHub repository and branch allowed to assume this role.
+    Value: previdus/adaptly · main

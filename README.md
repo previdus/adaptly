@@ -1,17 +1,18 @@
 # Adaptly
 
-Adaptly is a child-friendly multiplication learning platform for ages 8–10. It combines an adaptive practice path with two quick-play games and progress views for families.
+Adaptly is a child-friendly adaptive maths learning platform for ages 8–10. It combines a personal practice path across six topics with quick-play games and progress views for families.
 
 ## Play modes
 
-- **Level Up** follows an ordered path across eight multiplication concepts and 24 levels. Three consecutive correct, unhinted answers advance the learner; mistakes and hints keep practice on the current concept. Progress and evidence are saved to the learner history.
+- **Level Up** follows an ordered, topic-specific path across multiplication, addition, subtraction, division, HCF and LCM. Three consecutive correct, unhinted answers advance the learner; mistakes and hints keep practice on the current concept. Progress and evidence are saved to the learner history.
 - **Speed Sprint** is a one-minute solo round with score, answer streaks, and a personal best.
-- **Last Star Standing** lets 2–8 players race on shared questions. Each starts with three lives; the quickest correct answer stays safe, and eliminated players can keep watching.
+- **Last Star Standing** lets 2–8 players race on shared questions for their chosen topic. Each starts with three lives; the quickest correct answer stays safe, and eliminated players can keep watching.
 
 ## Learning content
 
-- `lib/learning.ts` defines the eight concepts, adaptive sequence, question generation, timing, and progress calculations.
-- `lib/multiply-bank.ts` contains the fixed 200-question bank used by Speed Sprint and Last Star Standing.
+- `lib/learning.ts` defines topic concepts, adaptive sequences, question generation, timing, and progress calculations.
+- `lib/multiply-bank.ts` contains the 200-question multiplication bank.
+- `lib/topic-bank.ts` exposes a validated 200-question bank for each topic to Speed Sprint and Last Star Standing. Fresh adaptive-practice questions are generated when needed.
 - The adaptive path generates practice questions and derives parent-facing skill evidence from saved attempts.
 
 ## Local development
@@ -38,3 +39,16 @@ The current app uses Vinext with a Cloudflare Workers runtime and D1 storage. Th
 `infra/aws/adaptly-poc.yaml` provisions a small EC2 host behind CloudFront. `Dockerfile.aws-poc` runs the existing Worker app with Wrangler's local D1 emulator, storing its SQLite state on an encrypted EBS volume. CloudFront provides HTTPS and sends app traffic to the origin; the origin security group accepts traffic from CloudFront only. This preserves the current app behavior for a pilot without rewriting its APIs.
 
 This is a single-host proof of concept, not a high-availability production setup or a managed AWS database. Learner records are deliberately excluded from GitHub and must be migrated separately into the persistent D1 state on the AWS host.
+
+### Automatic AWS deployment
+
+`.github/workflows/deploy-aws.yml` builds and type-checks every relevant `main` push, then refreshes the `adaptly-poc` EC2 instance over AWS Systems Manager. App code, question banks, and files under `drizzle/` trigger deployment. Database migrations are recorded in the persistent local D1 migration ledger and applied once when the container starts. The previous container image is restored if the new app does not become healthy.
+
+The workflow uses GitHub OIDC and short-lived AWS credentials; it does not store AWS access keys in GitHub. To activate it once:
+
+1. In AWS CloudFormation in `us-east-1`, create a stack from `infra/aws/github-actions-deploy-role.yaml`. If the account already has GitHub's OIDC provider, pass its ARN as `ExistingGitHubOidcProviderArn`; otherwise leave the parameter blank and the stack creates it.
+2. Copy the stack output `RoleArn`.
+3. In GitHub, open `previdus/adaptly` → **Settings** → **Secrets and variables** → **Actions** → **Variables**, and create `AWS_ROLE_TO_ASSUME` with that ARN.
+4. Ensure the AWS host is managed by Systems Manager and has the `app=Adaptly` and `Name=adaptly-poc` tags. These are set by `infra/aws/adaptly-poc.yaml`.
+
+The role trusts only `previdus/adaptly`'s `main` branch and can run the deployment script only on the tagged Adaptly host. Since Systems Manager runs commands with host-level privileges, protect `main` and limit who can push to it. A push before the one-time role and variable setup shows a setup note instead of attempting AWS access.
