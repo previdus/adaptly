@@ -44,11 +44,8 @@ This is a single-host proof of concept, not a high-availability production setup
 
 `.github/workflows/deploy-aws.yml` builds and type-checks every relevant `main` push, then refreshes the `adaptly-poc` EC2 instance over AWS Systems Manager. App code, question banks, and files under `drizzle/` trigger deployment. Database migrations are recorded in the persistent local D1 migration ledger and applied once when the container starts. The previous container image is restored if the new app does not become healthy.
 
-The workflow uses GitHub OIDC and short-lived AWS credentials; it does not store AWS access keys in GitHub. To activate it once:
+The workflow uses GitHub OIDC and short-lived AWS credentials; it does not store AWS access keys in GitHub. The `adaptly-github-actions-deploy-role` CloudFormation stack is created in the configured AWS account. Its `RoleArn` is set in the workflow; if recreating this setup in another AWS account, update that value to the new stack output.
 
-1. In AWS CloudFormation in `us-east-1`, create a stack from `infra/aws/github-actions-deploy-role.yaml`. If the account already has GitHub's OIDC provider, pass its ARN as `ExistingGitHubOidcProviderArn`; otherwise leave the parameter blank and the stack creates it.
-2. Copy the stack output `RoleArn`.
-3. In GitHub, open `previdus/adaptly` → **Settings** → **Secrets and variables** → **Actions** → **Variables**, and create `AWS_ROLE_TO_ASSUME` with that ARN.
-4. Ensure the AWS host is managed by Systems Manager and has the `app=Adaptly` and `Name=adaptly-poc` tags. These are set by `infra/aws/adaptly-poc.yaml`.
+To recreate the role in another account, create a CloudFormation stack in `us-east-1` from `infra/aws/github-actions-deploy-role.yaml`. If that account already has GitHub's OIDC provider, pass its ARN as `ExistingGitHubOidcProviderArn`; otherwise leave the parameter blank and the stack creates it. Set the new stack's `RoleArn` output as `role-to-assume` in the workflow. The AWS host must be managed by Systems Manager and have the `app=Adaptly` and `Name=adaptly-poc` tags, set by `infra/aws/adaptly-poc.yaml`.
 
 The role trusts only `previdus/adaptly`'s `main` branch and can run the deployment script only on the tagged Adaptly host. Since Systems Manager runs commands with host-level privileges, protect `main` and limit who can push to it. A push before the one-time role and variable setup shows a setup note instead of attempting AWS access.

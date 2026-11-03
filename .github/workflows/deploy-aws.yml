@@ -18,6 +18,7 @@ on:
       - "package-lock.json"
       - "vite.config.ts"
       - "next.config.ts"
+      - ".github/workflows/deploy-aws.yml"
   workflow_dispatch:
 
 permissions:
@@ -30,7 +31,6 @@ concurrency:
 jobs:
   deploy:
     name: Build and deploy the AWS POC
-    if: ${{ vars.AWS_ROLE_TO_ASSUME != '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -57,7 +57,7 @@ jobs:
       - name: Configure short-lived AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: arn:aws:iam::248189923299:role/AdaptlyGitHubActionsDeployRole
           aws-region: us-east-1
 
       - name: Refresh the Adaptly host through Systems Manager
@@ -108,16 +108,3 @@ jobs:
 
           echo "Timed out waiting for the AWS deployment command ${command_id}." >&2
           exit 1
-
-  setup-required:
-    name: AWS deployment access needs one-time setup
-    if: ${{ vars.AWS_ROLE_TO_ASSUME == '' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Explain the one-time setup
-        run: |
-          {
-            echo '### AWS deployment is not activated yet'
-            echo 'Create the short-lived GitHub OIDC role from `infra/aws/github-actions-deploy-role.yaml`, then add its RoleArn output as the repository Actions variable `AWS_ROLE_TO_ASSUME`.'
-            echo 'The setup guide is in the AWS deployment section of `README.md`.'
-          } >> "$GITHUB_STEP_SUMMARY"
