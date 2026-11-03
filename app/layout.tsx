@@ -10,7 +10,7 @@ import "./garden.css";
 
 export const metadata: Metadata = {
   title: "Adaptly | Learning that moves with you",
-  description: "Adaptive learning, one question at a time. Play Multiply Quest and discover your next level.",
+  description: "Adaptive maths learning at every child's pace. Explore multiplication, addition, subtraction, division, HCF and LCM through focused practice and playful challenges.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
