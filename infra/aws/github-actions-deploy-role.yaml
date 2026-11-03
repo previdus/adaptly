@@ -41,7 +41,7 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:sub: repo:previdus/adaptly:ref:refs/heads/main
+                token.actions.githubusercontent.com:sub: repo:previdus@11009306/adaptly@1442202874:ref:refs/heads/main
       Policies:
         - PolicyName: DeployAdaptlyPocThroughSsm
           PolicyDocument:
