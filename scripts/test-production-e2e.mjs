@@ -60,6 +60,25 @@ function answerForQuestion(q) {
   throw new Error(`Unknown arena question id: ${q.id} (${q.prompt})`);
 }
 
+async function waitNextRoundOrFinish(code, token) {
+  for (let poll = 0; poll < 20; poll++) {
+    const state = (
+      await apiGet(
+        `/api/arena?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`,
+      )
+    ).room;
+    if (state.status === "finished" || state.question) {
+      return state;
+    }
+    const waitMs =
+      state.nextAt > Date.now()
+        ? Math.min(4000, Math.max(150, state.nextAt - Date.now() + 150))
+        : 300;
+    await new Promise((r) => setTimeout(r, waitMs));
+  }
+  throw new Error(`Timed out waiting for next round in room ${code}`);
+}
+
 async function testClassroomMultiplayerMatchHttp() {
   console.log("1. [HTTP Multiplayer] Emulating 3-player Fair Classroom match (10 rounds)...");
   const host = await apiPost("/api/arena", {
@@ -125,26 +144,31 @@ async function testClassroomMultiplayerMatchHttp() {
       });
     }
 
-    // Wait for 1200ms round transition window to settle
-    await new Promise((r) => setTimeout(r, 1300));
-    state = (
-      await apiGet(
-        `/api/arena?code=${encodeURIComponent(code)}&token=${encodeURIComponent(host.token)}`,
-      )
-    ).room;
+    // Wait for intermission window (3.6s) to advance to the next round or finish
+    state = await waitNextRoundOrFinish(code, host.token);
 
     if (round === 1) {
       const avaAfterR1 = state.players.find((p) => p.name === "Ava");
       const leoAfterR1 = state.players.find((p) => p.name === "Leo");
       const milaAfterR1 = state.players.find((p) => p.name === "Mila");
       assert.equal(avaAfterR1.lives, 3, "Fastest accurate player keeps 3 hearts");
-      assert.equal(avaAfterR1.score, 150, "Fastest accurate player gets +150");
+      assert.ok(
+        avaAfterR1.score >= 150,
+        `Fastest accurate player gets >=150 (+100 accuracy + 50 leader + speedBonus), got ${avaAfterR1.score}`,
+      );
       assert.equal(
         leoAfterR1.lives,
         3,
         "Second accurate player ALSO keeps 3 hearts in classroom mode",
       );
-      assert.equal(leoAfterR1.score, 100, "Second accurate player gets +100");
+      assert.ok(
+        leoAfterR1.score >= 100,
+        `Second accurate player gets >=100 (+100 accuracy + speedBonus), got ${leoAfterR1.score}`,
+      );
+      assert.ok(
+        avaAfterR1.score > leoAfterR1.score,
+        "Fastest accurate player leads score",
+      );
       assert.equal(milaAfterR1.lives, 2, "Wrong answer loses 1 heart");
     }
   }
@@ -201,12 +225,7 @@ async function testShowdownMultiplayerMatchHttp() {
       token: zoe.token,
       value: correctAns,
     });
-    await new Promise((r) => setTimeout(r, 1300));
-    state = (
-      await apiGet(
-        `/api/arena?code=${encodeURIComponent(code)}&token=${encodeURIComponent(host.token)}`,
-      )
-    ).room;
+    state = await waitNextRoundOrFinish(code, host.token);
   }
 
   assert.equal(state.status, "finished", "Showdown match ends when opponent loses 3 hearts");
@@ -220,24 +239,22 @@ async function testShowdownMultiplayerMatchHttp() {
 
 async function testClassroomPilotFamilyHttp() {
   console.log("3. [HTTP Classroom Pilot] Emulating multi-student classroom section on /api/family...");
-  const section = `Class-5B-${Date.now().toString(36).slice(-4)}`;
+  const pilotEmail = `class5b.${Date.now().toString(36).slice(-5)}@berlin-pilot.edu`;
   const learners = ["Lukas", "Hannah", "Emil"];
-  let lastFamily = null;
+  let lastState = null;
 
-  for (const studentName of learners) {
+  for (const name of learners) {
     const res = await apiPost("/api/family", {
       action: "identify",
-      studentName,
-      grade: "Grade 5",
-      section,
-      school: "Berlin International Pilot",
+      email: pilotEmail,
+      name,
     });
-    lastFamily = res.family;
+    lastState = res.state;
   }
 
-  assert.equal(lastFamily.students.length, 3);
+  assert.equal(lastState.students.length, 3);
   console.log(
-    `   PASS: Classroom section "${section}" persisted ${lastFamily.students.length} learners.`,
+    `   PASS: Classroom pilot "${pilotEmail}" persisted ${lastState.students.length} learners.`,
   );
 }
 
@@ -252,42 +269,59 @@ async function testPlaywrightMultiBrowserSubstance() {
     const hostPage = await hostContext.newPage();
     const guestPage = await guestContext.newPage();
 
-    // 4a. Verify Home Arcade, Level Up & Hint, Parent Report & Classroom View on HostPage
+    // 4a. Verify Home Arcade, Demo initialization, Parent Report & Classroom View, and Level Up + Hint
     await hostPage.goto(BASE_URL, { waitUntil: "networkidle" });
-    await hostPage.waitForSelector("text=Pick Your Game", { timeout: 15000 });
+    await hostPage.waitForSelector("#multiply-quest-title", { timeout: 15000 });
+
+    // Initialize Demo family via Family account button -> Take a peek first — try the demo
+    await hostPage.click("button[aria-label='Family account']");
+    await hostPage.waitForSelector("button.demolink", { timeout: 10000 });
+    await hostPage.click("button.demolink");
+    await hostPage.waitForSelector(".demo-banner", { timeout: 10000 });
 
     // Check Parent Report & Classroom View cohort heatmap
-    await hostPage.click("button:has-text('Parent report')");
+    await hostPage.click("button[aria-label='Parent report']");
     await hostPage.waitForSelector("button:has-text('Classroom View')", {
       timeout: 10000,
     });
     await hostPage.click("button:has-text('Classroom View')");
-    await hostPage.waitForSelector("text=Mastered Cells", { timeout: 10000 });
-    await hostPage.waitForSelector("button:has-text('Export CSV')", {
+    await hostPage.waitForSelector("text=Classroom concept mastery heatmap", {
       timeout: 10000,
     });
-    console.log("   PASS: Parent Report -> Classroom View cohort heatmap & CSV export verified.");
+    await hostPage.waitForSelector("button:has-text('Export classroom CSV')", {
+      timeout: 10000,
+    });
+    console.log(
+      "   PASS: Parent Report -> Classroom View cohort heatmap & CSV export verified.",
+    );
 
     // Check Level Up adaptive question + teaching hint
-    await hostPage.click("button:has-text('Back to arcade')");
-    await hostPage.waitForSelector("text=Pick Your Game", { timeout: 10000 });
-    await hostPage.click("article:has-text('Level Up') button:has-text('Start Level Up')");
-    await hostPage.waitForSelector("button:has-text('Need a hint?')", {
-      timeout: 10000,
-    });
-    await hostPage.click("button:has-text('Need a hint?')");
-    await hostPage.waitForSelector(".hint-box", { timeout: 10000 });
+    await hostPage.click("button[aria-label='Adaptly home']");
+    await hostPage.waitForSelector("#multiply-quest-title", { timeout: 10000 });
+    await hostPage.click("button[aria-label='Play Level Up']");
+    await hostPage.waitForSelector(".topic-pick-dialog", { timeout: 10000 });
+    await hostPage.click(".topic-pick-dialog button:has-text('Maths')");
+    await hostPage.click(".topic-pick-dialog button:has-text('Multiply Quest')");
+    await hostPage.waitForSelector("button.play-hint", { timeout: 10000 });
+    await hostPage.click("button.play-hint");
+    await hostPage.waitForSelector(".play-help", { timeout: 10000 });
     console.log("   PASS: Level Up adaptive workspace & visual hint drawer verified.");
 
     // Navigate both HostPage and GuestPage to Last Star Standing
-    await hostPage.click("button:has-text('Games')");
-    await hostPage.waitForSelector("text=Pick Your Game", { timeout: 10000 });
-    await hostPage.click("article:has-text('Last Star Standing') button:has-text('Enter the Arena')");
+    await hostPage.click("button[aria-label='Save and exit quiz']");
+    await hostPage.waitForSelector("#multiply-quest-title", { timeout: 10000 });
+    await hostPage.click("button[aria-label='Play Last Star Standing']");
+    await hostPage.waitForSelector(".topic-pick-dialog", { timeout: 10000 });
+    await hostPage.click(".topic-pick-dialog button:has-text('Maths')");
+    await hostPage.click(".topic-pick-dialog button:has-text('Multiply Quest')");
     await hostPage.waitForSelector(".arena-entry-card", { timeout: 10000 });
 
     await guestPage.goto(BASE_URL, { waitUntil: "networkidle" });
-    await guestPage.waitForSelector("text=Pick Your Game", { timeout: 15000 });
-    await guestPage.click("article:has-text('Last Star Standing') button:has-text('Enter the Arena')");
+    await guestPage.waitForSelector("#multiply-quest-title", { timeout: 15000 });
+    await guestPage.click("button[aria-label='Play Last Star Standing']");
+    await guestPage.waitForSelector(".topic-pick-dialog", { timeout: 10000 });
+    await guestPage.click(".topic-pick-dialog button:has-text('Maths')");
+    await guestPage.click(".topic-pick-dialog button:has-text('Multiply Quest')");
     await guestPage.waitForSelector(".arena-entry-card", { timeout: 10000 });
 
     // Host creates a Fair Classroom room in UI
