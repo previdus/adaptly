@@ -1,5 +1,7 @@
 import type { Student } from "./learning";
 
+export const MAX_FAMILY_LEARNERS = 35;
+
 export interface SavedFamilyState {
   students: Student[];
   active: number;

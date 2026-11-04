@@ -56,6 +56,8 @@ type Room = {
   code: string;
   topicId?: TopicId;
   topicLabel?: string;
+  mode?: 'classroom' | 'showdown';
+  maxPlayers?: number;
   status: 'lobby' | 'playing' | 'finished';
   round: number;
   totalRounds: number;
@@ -141,9 +143,14 @@ export default function ArenaHub({
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [preferredMode, setPreferredMode] = useState<'classroom' | 'showdown'>(
+    'classroom'
+  );
 
   const label = topicLabel(room?.topicId || topicId);
   const roomCode = room?.code || '';
+  const activeMode = room?.mode ?? preferredMode;
+  const maxPlayers = room?.maxPlayers ?? 35;
 
   const load = useCallback(async (c: string, t: string, syncSession = false) => {
     if (!c || !t) return;
@@ -212,7 +219,12 @@ export default function ArenaHub({
     try {
       const d = await post(
         actionKind === 'create'
-          ? { action: actionKind, name: playerName.trim(), topicId }
+          ? {
+              action: actionKind,
+              name: playerName.trim(),
+              topicId,
+              mode: preferredMode,
+            }
           : { action: actionKind, code: code.trim(), name: playerName.trim() }
       );
       setRoom(d.room);
@@ -323,8 +335,9 @@ export default function ArenaHub({
               <em>{label.toLowerCase()}!</em>
             </h1>
             <p>
-              Race your friends. Be the quickest with a correct answer to keep
-              your hearts. Last player standing takes the crown.
+              Race your classmates or friends. Every accurate answer protects
+              your heart in Fair Classroom mode, while the fastest thinker earns
+              bonus speed points.
             </p>
             <div className="arena-hero-meta">
               <span>
@@ -334,7 +347,7 @@ export default function ArenaHub({
                 <Hourglass size={16} /> One shared timer
               </span>
               <span>
-                <Trophy size={16} /> 2–8 players
+                <Trophy size={16} /> 2–35 players
               </span>
             </div>
             <div className="arena-orbit-scene" aria-hidden="true">
@@ -362,6 +375,25 @@ export default function ArenaHub({
                 maxLength={20}
                 placeholder="Your name"
               />
+            </label>
+            <label>
+              Room rule mode
+              <select
+                value={preferredMode}
+                onChange={(e) =>
+                  setPreferredMode(
+                    e.target.value === 'showdown' ? 'showdown' : 'classroom'
+                  )
+                }
+                aria-label="Room rule mode"
+              >
+                <option value="classroom">
+                  Fair Classroom (Accurate answers keep hearts · fastest gets bonus)
+                </option>
+                <option value="showdown">
+                  Sudden-Death Showdown (Only fastest correct keeps a heart)
+                </option>
+              </select>
             </label>
             <button
               className="arena-create"
@@ -410,7 +442,7 @@ export default function ArenaHub({
           <div className="arena-lobby-title">
             <div>
               <span className="arena-kicker">
-                ROOM IS READY · {room.players.length}/8 PLAYERS
+                ROOM IS READY · {room.players.length}/{maxPlayers} PLAYERS
               </span>
               <h1>Call your crew!</h1>
               <p>Share the code. The countdown starts when the host is ready.</p>
@@ -435,9 +467,9 @@ export default function ArenaHub({
               </div>
               {room.players.map((p, i) => (
                 <div className="arena-lobby-player" key={p.id}>
-                  <span className={'arena-player-avatar av' + i}>
+                  <span className={'arena-player-avatar av' + (i % 8)}>
                     {' '}
-                    {['🚀', '🦊', '🐸', '🦄', '🐼', '🐙', '🐯', '🐝'][i]}
+                    {['🚀', '🦊', '🐸', '🦄', '🐼', '🐙', '🐯', '🐝'][i % 8]}
                   </span>
                   <div>
                     <b>
@@ -457,34 +489,83 @@ export default function ArenaHub({
                 </div>
               )}
               <div className="arena-invite">
-                <span>↗</span> Send the room code to friends or family
+                <span>↗</span> Send the room code to classmates, friends, or family
               </div>
             </section>
 
             <section className="arena-rules">
               <div className="arena-rule-number">01</div>
-              <h2>How to win</h2>
+              <h2>
+                {activeMode === 'classroom'
+                  ? 'Fair Classroom Rules'
+                  : 'Sudden-Death Showdown'}
+              </h2>
+              {room.isHost && (
+                <div className="arena-mode-toggle" role="group" aria-label="Rule mode">
+                  <button
+                    type="button"
+                    className={
+                      activeMode === 'classroom' ? 'arena-join' : 'arena-switch'
+                    }
+                    disabled={busy}
+                    onClick={() => void action('mode', { mode: 'classroom' })}
+                  >
+                    Fair Classroom
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      activeMode === 'showdown' ? 'arena-join' : 'arena-switch'
+                    }
+                    disabled={busy}
+                    onClick={() => void action('mode', { mode: 'showdown' })}
+                  >
+                    Sudden Death
+                  </button>
+                </div>
+              )}
               <div className="arena-rule">
                 <span className="rule-heart">♥ ♥ ♥</span>
                 <p>
                   Everyone starts with <b>3 lives</b>.
                 </p>
               </div>
-              <div className="arena-rule">
-                <span className="rule-bolt">⚡</span>
-                <p>
-                  The <b>fastest correct answer</b> stays safe.
-                </p>
-              </div>
-              <div className="arena-rule">
-                <span className="rule-crack">💔</span>
-                <p>
-                  Everyone else loses a life. Zero lives? Watch and cheer!
-                </p>
-              </div>
+              {activeMode === 'classroom' ? (
+                <>
+                  <div className="arena-rule">
+                    <span className="rule-bolt">✓</span>
+                    <p>
+                      <b>Every accurate answer</b> keeps your heart (+100 pts),
+                      and the fastest thinker wins a <b>+50 speed bonus</b>.
+                    </p>
+                  </div>
+                  <div className="arena-rule">
+                    <span className="rule-crack">💔</span>
+                    <p>
+                      Only wrong answers or timeouts lose a heart. Zero lives?
+                      Watch and cheer!
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="arena-rule">
+                    <span className="rule-bolt">⚡</span>
+                    <p>
+                      The <b>fastest correct answer</b> stays safe.
+                    </p>
+                  </div>
+                  <div className="arena-rule">
+                    <span className="rule-crack">💔</span>
+                    <p>
+                      Everyone else loses a life. Zero lives? Watch and cheer!
+                    </p>
+                  </div>
+                </>
+              )}
               <div className="arena-rule">
                 <span className="rule-crown">👑</span>
-                <p>Last player standing wins the crown.</p>
+                <p>Most hearts and top score win the crown.</p>
               </div>
               {room.isHost ? (
                 <button
@@ -504,8 +585,8 @@ export default function ArenaHub({
                 </div>
               )}
               <small className="arena-bank-note">
-                {room.totalRounds} {room.topicLabel || label} questions · 2–8
-                players · Timer grows with the challenge
+                {room.totalRounds} {room.topicLabel || label} questions · 2–
+                {maxPlayers} players · Timer grows with the challenge
               </small>
             </section>
           </div>
@@ -576,7 +657,9 @@ export default function ArenaHub({
                 {room.question ? (
                   <>
                     <span className="arena-question-kicker">
-                      ⚡ FIRST CORRECT ANSWER WINS SAFETY
+                      {activeMode === 'classroom'
+                        ? '✓ ACCURATE ANSWERS KEEP HEARTS · FASTEST WINS SPEED BONUS'
+                        : '⚡ FIRST CORRECT ANSWER WINS SAFETY'}
                     </span>
                     <h2>{room.question.prompt}</h2>
                   </>
@@ -664,13 +747,15 @@ export default function ArenaHub({
                   <Sparkles size={18} />
                   <span>
                     {room.history.at(-1)?.safeId === room.playerId ? (
-                      <>You were fastest correct — hearts safe!</>
+                      <>You were fastest correct — speed bonus + hearts safe!</>
                     ) : room.history.at(-1)?.lostIds.includes(room.playerId) ? (
                       room.hasAnswered && room.myAnswerCorrect ? (
                         <>Correct, but another racer was quicker.</>
                       ) : (
                         <>Try again next round.</>
                       )
+                    ) : room.hasAnswered && room.myAnswerCorrect ? (
+                      <>Accurate answer — your hearts are safe!</>
                     ) : (
                       room.history.at(-1)?.message
                     )}

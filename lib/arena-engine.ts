@@ -1,6 +1,9 @@
 import { topics, type TopicId } from "./learning";
 import { questionBank, topicLabel, type GameQuestion } from "./topic-bank";
 
+export type ArenaMode = "classroom" | "showdown";
+export const MAX_ARENA_PLAYERS = 35;
+
 export interface ArenaPlayer {
   id: string;
   tokenHash: string;
@@ -32,6 +35,7 @@ export interface ArenaMatch {
   code: string;
   hostId: string;
   topicId: TopicId;
+  mode?: ArenaMode;
   status: "lobby" | "playing" | "finished";
   players: ArenaPlayer[];
   questionIds: string[];
@@ -77,17 +81,24 @@ export function buildMatchQuestionOrder(topic: TopicId): string[] {
   );
 }
 
+export function resolveArenaMode(match: Pick<ArenaMatch, "mode">): ArenaMode {
+  return match.mode === "showdown" ? "showdown" : "classroom";
+}
+
 export function publicState(match: ArenaMatch, playerId: string) {
   const currentQuestion = bankById.get(match.questionIds[match.round]);
   const sortedPlayers = [...match.players].sort(
     (a, b) => b.lives - a.lives || b.score - a.score || a.joinedAt - b.joinedAt,
   );
   const topicId = match.topicId || "multiply";
+  const mode = resolveArenaMode(match);
 
   return {
     code: match.code,
     topicId,
     topicLabel: topicLabel(topicId),
+    mode,
+    maxPlayers: MAX_ARENA_PLAYERS,
     status: match.status,
     round: match.round + 1,
     totalRounds: match.questionIds.length,
@@ -141,21 +152,61 @@ export function beginRound(match: ArenaMatch, now = Date.now()): void {
   match.answers = {};
 }
 
-export function settle(match: ArenaMatch, now = Date.now()): void {
-  const question = bankById.get(match.questionIds[match.round]);
-  const alivePlayers = match.players.filter((player) => player.lives > 0);
-  const correctSubmissions = alivePlayers
-    .map((player) => ({ player, answer: match.answers[player.id] }))
-    .filter((entry) => entry.answer?.correct)
-    .sort((a, b) => a.answer.elapsedMs - b.answer.elapsedMs);
+function settleClassroomRound(
+  match: ArenaMatch,
+  alivePlayers: ArenaPlayer[],
+  correctIds: Set<string>,
+  safePlayer: ArenaPlayer | null,
+  now: number,
+): { lostIds: string[]; message: string } {
+  const lostIds: string[] = [];
 
-  const safePlayer = correctSubmissions[0]?.player ?? null;
+  for (const player of alivePlayers) {
+    if (correctIds.has(player.id)) {
+      const answeredAt = match.answers[player.id]?.answeredAt ?? now;
+      const speedBonus = Math.max(0, Math.floor((match.roundEndsAt - answeredAt) / 200));
+      const leaderBonus = player.id === safePlayer?.id ? 50 : 0;
+      player.score += 100 + leaderBonus + speedBonus;
+    } else {
+      player.lives = Math.max(0, player.lives - 1);
+      lostIds.push(player.id);
+    }
+  }
+
+  if (!safePlayer) {
+    return {
+      lostIds,
+      message: "No correct answers this round. Everyone lost a heart.",
+    };
+  }
+  if (correctIds.size === 1) {
+    return {
+      lostIds,
+      message: `${safePlayer.name} answered accurately and kept their heart!`,
+    };
+  }
+  return {
+    lostIds,
+    message: `${safePlayer.name} led the speed bonus · ${correctIds.size} players kept their hearts!`,
+  };
+}
+
+function settleShowdownRound(
+  match: ArenaMatch,
+  alivePlayers: ArenaPlayer[],
+  correctIds: Set<string>,
+  safePlayer: ArenaPlayer | null,
+  now: number,
+): { lostIds: string[]; message: string } {
   const lostIds: string[] = [];
 
   for (const player of alivePlayers) {
     if (player.id !== safePlayer?.id) {
       player.lives = Math.max(0, player.lives - 1);
       lostIds.push(player.id);
+      if (correctIds.has(player.id)) {
+        player.score += 40;
+      }
     }
   }
 
@@ -165,12 +216,29 @@ export function settle(match: ArenaMatch, now = Date.now()): void {
     safePlayer.score += 100 + speedBonus;
   }
 
-  const remainingPlayers = match.players.filter((player) => player.lives > 0);
   const message = safePlayer
     ? `${safePlayer.name} was the fastest correct!`
-    : correctSubmissions.length
-      ? "No safe answer this round."
-      : "Time! Everyone lost a life.";
+    : "Time! Everyone lost a life.";
+
+  return { lostIds, message };
+}
+
+export function settle(match: ArenaMatch, now = Date.now()): void {
+  const question = bankById.get(match.questionIds[match.round]);
+  const alivePlayers = match.players.filter((player) => player.lives > 0);
+  const correctSubmissions = alivePlayers
+    .map((player) => ({ player, answer: match.answers[player.id] }))
+    .filter((entry) => entry.answer?.correct)
+    .sort((a, b) => a.answer.elapsedMs - b.answer.elapsedMs);
+
+  const safePlayer = correctSubmissions[0]?.player ?? null;
+  const correctIds = new Set(correctSubmissions.map((entry) => entry.player.id));
+  const mode = resolveArenaMode(match);
+
+  const { lostIds, message } =
+    mode === "showdown"
+      ? settleShowdownRound(match, alivePlayers, correctIds, safePlayer, now)
+      : settleClassroomRound(match, alivePlayers, correctIds, safePlayer, now);
 
   match.history.push({
     round: match.round + 1,
@@ -182,15 +250,19 @@ export function settle(match: ArenaMatch, now = Date.now()): void {
     message,
   });
 
+  const remainingPlayers = match.players.filter((player) => player.lives > 0);
   if (remainingPlayers.length <= 1) {
     match.status = "finished";
-    match.winnerId = remainingPlayers[0]?.id ?? null;
+    match.winnerId =
+      remainingPlayers[0]?.id ??
+      [...match.players].sort((a, b) => b.score - a.score)[0]?.id ??
+      null;
     match.nextAt = 0;
   } else if (match.round + 1 >= match.questionIds.length) {
     match.status = "finished";
     match.winnerId =
       [...remainingPlayers].sort(
-        (a, b) => b.score - a.score || b.lives - a.lives,
+        (a, b) => b.lives - a.lives || b.score - a.score,
       )[0]?.id ?? null;
     match.nextAt = 0;
   } else {

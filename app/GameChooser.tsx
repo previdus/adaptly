@@ -398,7 +398,7 @@ export default function GameChooser({
                       ? 'Every child starts somewhere different. The questions follow what they show they know: three confident answers open the next step; a tricky answer brings more practice on this concept.'
                       : intro === 'sprint'
                         ? `A playful one-minute ${topicName.toLowerCase()} round builds quick recall. Accurate answers and streaks grow the score, and every round gives the child a personal best to chase.`
-                        : `Friends race to answer the same ${topicName.toLowerCase()} question. The quickest correct answer keeps a heart; the other active players lose one. When a player is out, they can still watch the race.`}
+                        : `Friends or classmates race to answer the same ${topicName.toLowerCase()} question. In Fair Classroom mode, every accurate answer protects your heart and the fastest correct thinker wins bonus points.`}
                   </p>
                   {intro === 'level' ? (
                     <div
@@ -482,8 +482,8 @@ export default function GameChooser({
                         <>
                           <div>
                             <span>RACERS</span>
-                            <b>2–8</b>
-                            <small>friends or family</small>
+                            <b>2–35</b>
+                            <small>classmates or friends</small>
                           </div>
                           <div>
                             <span>START WITH</span>

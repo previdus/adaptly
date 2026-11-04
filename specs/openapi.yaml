@@ -41,13 +41,16 @@ paths:
               properties:
                 action:
                   type: string
-                  enum: [create, join, start, answer, leave]
+                  enum: [create, join, start, answer, leave, mode]
                 name:
                   type: string
                   maxLength: 20
                 topicId:
                   type: string
                   enum: [multiply, addition, subtraction, division, hcf, lcm, english]
+                mode:
+                  type: string
+                  enum: [classroom, showdown]
                 code:
                   type: string
                   pattern: "^[A-HJ-NP-Z2-9]{5}$"

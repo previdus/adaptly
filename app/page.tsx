@@ -42,6 +42,11 @@ import AdaptiveStory from './AdaptiveStory';
 import './game-chooser.css';
 import './responsive-overrides.css';
 import { LEVEL_UP_DURATION } from '../lib/celebrations';
+import {
+  exportClassroomCsv,
+  summarizeClassroom,
+} from '../lib/classroom-report';
+import { MAX_FAMILY_LEARNERS } from '../lib/state-repair';
 
 type Family = {
   students: Student[];
@@ -128,6 +133,10 @@ export default function Page() {
   const [streak, setStreak] = useState(0);
   const [misses, setMisses] = useState<Record<number, number>>({});
   const [activeTopic, setActiveTopic] = useState<TopicId>('multiply');
+  const [reportTab, setReportTab] = useState<'learner' | 'classroom'>('learner');
+  const [classroomTopicFilter, setClassroomTopicFilter] = useState<
+    TopicId | 'all'
+  >('all');
 
   const audioRef = useRef<AudioContext | null>(null);
   const lastTick = useRef(-1);
@@ -138,6 +147,11 @@ export default function Page() {
 
   const student = family?.students[family.active] || null;
   const attempts = useMemo(() => student?.attempts ?? [], [student]);
+  const classroom = useMemo(
+    () =>
+      family ? summarizeClassroom(family.students, classroomTopicFilter) : null,
+    [family, classroomTopicFilter]
+  );
   const correct = attempts.filter((x) => x.correct).length;
   const mastered = skills.filter((_, i) => stats(attempts, i).mastered).length;
 
@@ -428,25 +442,31 @@ export default function Page() {
   }
 
   function reportDownload() {
-    const lines = [
-      'Subject,Topic,Concept,Attempts,Correct,Independent accuracy,Status',
-      ...skills.map((s, i) => {
-        const t = stats(attempts, i);
-        return `${s.topic === 'english' ? 'English Grammar' : 'Maths'},${
-          topicInfo(s.topic).name
-        },${s.name},${t.total},${t.correct},${
-          t.total ? Math.round(t.acc * 100) + '%' : 'Not assessed'
-        },${
-          t.mastered ? 'Secure' : t.total ? 'Developing' : 'Not assessed'
-        }`;
-      }),
-    ];
+    const csvContent =
+      reportTab === 'classroom' && family
+        ? exportClassroomCsv(family.students)
+        : [
+            'Subject,Topic,Concept,Attempts,Correct,Independent accuracy,Status',
+            ...skills.map((s, i) => {
+              const t = stats(attempts, i);
+              return `${s.topic === 'english' ? 'English Grammar' : 'Maths'},${
+                topicInfo(s.topic).name
+              },${s.name},${t.total},${t.correct},${
+                t.total ? Math.round(t.acc * 100) + '%' : 'Not assessed'
+              },${
+                t.mastered ? 'Secure' : t.total ? 'Developing' : 'Not assessed'
+              }`;
+            }),
+          ].join('\n');
     const url = URL.createObjectURL(
-      new Blob([lines.join('\n')], { type: 'text/csv' })
+      new Blob([csvContent], { type: 'text/csv' })
     );
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'adaptly-learning-report.csv';
+    a.download =
+      reportTab === 'classroom'
+        ? 'adaptly-classroom-report.csv'
+        : 'adaptly-learning-report.csv';
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -894,20 +914,51 @@ export default function Page() {
                     A CLEARER PICTURE, A KINDER NEXT STEP
                   </div>
                   <h1>
-                    {student
-                      ? `${student.name}’s learning story`
-                      : 'Big clarity for grown-ups.'}
+                    {reportTab === 'classroom'
+                      ? 'Classroom & Group Snapshot'
+                      : student
+                        ? `${student.name}’s learning story`
+                        : 'Big clarity for grown-ups.'}
                   </h1>
                   <p>
                     Understanding first. Confidence follows. Every insight comes
                     from actual attempts.
                   </p>
                 </div>
-                {attempts.length > 0 && (
-                  <button className="secondary" onClick={reportDownload}>
-                    <Download size={17} /> Export report
-                  </button>
-                )}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {family && (
+                    <>
+                      <button
+                        type="button"
+                        className={
+                          reportTab === 'learner' ? 'primary' : 'secondary'
+                        }
+                        onClick={() => setReportTab('learner')}
+                      >
+                        Learner View ({student?.name || 'Explorer'})
+                      </button>
+                      <button
+                        type="button"
+                        className={
+                          reportTab === 'classroom' ? 'primary' : 'secondary'
+                        }
+                        onClick={() => setReportTab('classroom')}
+                      >
+                        Classroom View ({family.students.length} learners)
+                      </button>
+                    </>
+                  )}
+                  {(attempts.length > 0 ||
+                    (reportTab === 'classroom' &&
+                      (family?.students.length || 0) > 0)) && (
+                    <button className="secondary" onClick={reportDownload}>
+                      <Download size={17} />{' '}
+                      {reportTab === 'classroom'
+                        ? 'Export classroom CSV'
+                        : 'Export report'}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {!student ? (
@@ -925,6 +976,207 @@ export default function Page() {
                     Set up your family <ArrowRight size={18} />
                   </button>
                 </div>
+              ) : reportTab === 'classroom' && family && classroom ? (
+                <>
+                  <section className="learning-journey-note">
+                    <span>👩‍🏫</span>
+                    <div>
+                      <span className="eyebrow">
+                        TEACHER & COHORT OVERVIEW · UP TO {MAX_FAMILY_LEARNERS}{' '}
+                        LEARNERS PER SECTION
+                      </span>
+                      <h2>
+                        {family.students.length}{' '}
+                        {family.students.length === 1 ? 'learner' : 'learners'}{' '}
+                        tracked · {classroom.attentionCount} needing targeted
+                        concept support
+                      </h2>
+                      <p>
+                        Filter by subject or topic to see which concepts are
+                        secure across the group and which learners have two or
+                        more recent mistakes on a specific step.
+                      </p>
+                    </div>
+                  </section>
+
+                  <div className="report-metrics">
+                    <div>
+                      <span>Enrolled learners</span>
+                      <b>
+                        {family.students.length} / {MAX_FAMILY_LEARNERS}
+                      </b>
+                      <small>Click any learner below to switch</small>
+                    </div>
+                    <div>
+                      <span>Learners needing help</span>
+                      <b>{classroom.attentionCount}</b>
+                      <small>≥2 recent mistakes or &lt;60% accuracy</small>
+                    </div>
+                    <div>
+                      <span>Concepts with secure learners</span>
+                      <b>
+                        {
+                          classroom.concepts.filter((c) => c.secureCount > 0)
+                            .length
+                        }{' '}
+                        / {classroom.concepts.length}
+                      </b>
+                      <small>8+ independent attempts at ≥80%</small>
+                    </div>
+                    <div>
+                      <span>Topic filter</span>
+                      <select
+                        aria-label="Filter classroom report by topic"
+                        value={classroomTopicFilter}
+                        onChange={(e) =>
+                          setClassroomTopicFilter(
+                            e.target.value as TopicId | 'all'
+                          )
+                        }
+                        style={{
+                          marginTop: '6px',
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <option value="all">All subjects (37 concepts)</option>
+                        {topics.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="report-table">
+                    <div className="report-table-head">
+                      <h2>Learner roster & intervention alerts</h2>
+                      <span>
+                        Select a learner to open their individual report or
+                        launch practice
+                      </span>
+                    </div>
+                    <div className="table-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Learner</th>
+                            <th>Current level</th>
+                            <th>Attempts</th>
+                            <th>Independent accuracy</th>
+                            <th>Secure concepts</th>
+                            <th>Intervention focus</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {classroom.learners.map((learner, idx) => (
+                            <tr key={learner.id}>
+                              <td>
+                                <b>{learner.name}</b>
+                                {idx === family.active ? ' (active)' : ''}
+                              </td>
+                              <td>
+                                Level {learner.topicLevel} of{' '}
+                                {learner.totalLevels}
+                              </td>
+                              <td>{learner.totalAttempts}</td>
+                              <td>
+                                {learner.independentAccuracy === null
+                                  ? '—'
+                                  : `${learner.independentAccuracy}%`}
+                              </td>
+                              <td>
+                                {learner.secureSkills} secure ·{' '}
+                                {learner.developingSkills} developing
+                              </td>
+                              <td>
+                                {learner.needsAttention ? (
+                                  <span className="status developing">
+                                    Needs help:{' '}
+                                    {learner.focusSkills.slice(0, 2).join(', ')}
+                                  </span>
+                                ) : learner.totalAttempts > 0 ? (
+                                  <span className="status secure">On track</span>
+                                ) : (
+                                  <span className="status">Not started</span>
+                                )}
+                              </td>
+                              <td>
+                                <button
+                                  className="textbutton"
+                                  onClick={() => {
+                                    persist({ ...family, active: idx });
+                                    setReportTab('learner');
+                                  }}
+                                >
+                                  Inspect →
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="report-table">
+                    <div className="report-table-head">
+                      <h2>Classroom concept mastery heatmap</h2>
+                      <span>
+                        Identifies which students need small-group support on
+                        each concept
+                      </span>
+                    </div>
+                    <div className="table-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Topic & concept</th>
+                            <th>Secure</th>
+                            <th>Developing</th>
+                            <th>Needs help</th>
+                            <th>Not assessed</th>
+                            <th>Learners needing support</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {classroom.concepts.map((concept) => (
+                            <tr key={concept.skillIndex}>
+                              <td>
+                                <span>{concept.skillIcon}</span>{' '}
+                                <small>{concept.topicName} · </small>
+                                {concept.skillName}
+                              </td>
+                              <td>{concept.secureCount}</td>
+                              <td>{concept.developingCount}</td>
+                              <td>
+                                <b
+                                  style={{
+                                    color:
+                                      concept.needsHelpCount > 0
+                                        ? '#b42318'
+                                        : 'inherit',
+                                  }}
+                                >
+                                  {concept.needsHelpCount}
+                                </b>
+                              </td>
+                              <td>{concept.notAssessedCount}</td>
+                              <td>
+                                {concept.studentsNeedingHelp.length > 0
+                                  ? concept.studentsNeedingHelp.join(', ')
+                                  : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <>
                   <section className="learning-journey-note">
@@ -1233,7 +1485,7 @@ export default function Page() {
                   e.preventDefault();
                   const f = e.currentTarget;
                   const name = String(new FormData(f).get('name')).trim();
-                  if (name && family.students.length < 10) {
+                  if (name && family.students.length < MAX_FAMILY_LEARNERS) {
                     persist({
                       ...family,
                       students: [
@@ -1247,7 +1499,8 @@ export default function Page() {
                 }}
               >
                 <label>
-                  Add another explorer{' '}
+                  Add another explorer (up to {MAX_FAMILY_LEARNERS} per classroom
+                  or family){' '}
                   <div className="answer-row">
                     <input
                       name="name"
@@ -1257,7 +1510,7 @@ export default function Page() {
                     />
                     <button
                       className="secondary"
-                      disabled={family.students.length >= 10}
+                      disabled={family.students.length >= MAX_FAMILY_LEARNERS}
                     >
                       <Plus size={16} /> Add learner
                     </button>

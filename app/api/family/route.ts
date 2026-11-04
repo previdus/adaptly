@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { isSameOriginRequest } from "../../../lib/request-origin";
-import { readSavedState } from "../../../lib/state-repair";
+import { MAX_FAMILY_LEARNERS, readSavedState } from "../../../lib/state-repair";
 
 const response = (data: unknown, status = 200, cookie?: string) =>
   Response.json(data, {
@@ -135,11 +135,10 @@ export async function POST(req: Request) {
         (student) => student.name.trim().toLowerCase() === name.toLowerCase(),
       );
       if (active < 0) {
-        if (state.students.length >= 10) {
+        if (state.students.length >= MAX_FAMILY_LEARNERS) {
           return response(
             {
-              error:
-                "This pilot email already has 10 learner profiles. Use an existing learner name.",
+              error: `This pilot email already has ${MAX_FAMILY_LEARNERS} learner profiles. Use an existing learner name.`,
             },
             400,
           );
@@ -189,9 +188,9 @@ export async function POST(req: Request) {
       if (pilotRecord) {
         const candidateState = body.state as { students?: unknown[] } | undefined;
         if (
-          JSON.stringify(body.state).length > 800000 ||
+          JSON.stringify(body.state).length > 2000000 ||
           !Array.isArray(candidateState?.students) ||
-          candidateState.students.length > 10
+          candidateState.students.length > MAX_FAMILY_LEARNERS
         ) {
           return response({ error: "Invalid progress data" }, 400);
         }
@@ -225,9 +224,9 @@ export async function POST(req: Request) {
       }
       const candidateState = body.state as { students?: unknown[] } | undefined;
       if (
-        JSON.stringify(body.state).length > 800000 ||
+        JSON.stringify(body.state).length > 2000000 ||
         !Array.isArray(candidateState?.students) ||
-        candidateState.students.length > 10
+        candidateState.students.length > MAX_FAMILY_LEARNERS
       ) {
         return response({ error: "Invalid progress data" }, 400);
       }

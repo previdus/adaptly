@@ -4,11 +4,13 @@ import {
   bankById,
   beginRound,
   buildMatchQuestionOrder,
+  MAX_ARENA_PLAYERS,
   newCode,
   publicState,
   ROOM_CODE_REGEX,
   settle,
   type ArenaMatch,
+  type ArenaMode,
 } from "../../../lib/arena-engine";
 import { topics, type TopicId } from "../../../lib/learning";
 import { isSameOriginRequest } from "../../../lib/request-origin";
@@ -138,11 +140,14 @@ export async function POST(req: Request) {
         const id = crypto.randomUUID();
         const playerId = crypto.randomUUID();
         const token = crypto.randomUUID() + crypto.randomUUID();
+        const mode: ArenaMode =
+          body.mode === "showdown" ? "showdown" : "classroom";
         const match: ArenaMatch = {
           id,
           code,
           hostId: playerId,
           topicId: topic,
+          mode,
           status: "lobby",
           players: [
             {
@@ -196,9 +201,11 @@ export async function POST(req: Request) {
       if (match.status !== "lobby") {
         return json({ error: "This match has already started." }, 409);
       }
-      if (match.players.length >= 8) {
+      if (match.players.length >= MAX_ARENA_PLAYERS) {
         return json(
-          { error: "This room is full. Start a new room for up to 8 players." },
+          {
+            error: `This room is full. Start a new room for up to ${MAX_ARENA_PLAYERS} players.`,
+          },
           409,
         );
       }
@@ -249,6 +256,17 @@ export async function POST(req: Request) {
     const result = await update(code, token, (match, playerId, timestamp) => {
       advance(match, timestamp);
       const player = match.players.find((item) => item.id === playerId)!;
+
+      if (body.action === "mode") {
+        if (match.hostId !== playerId || match.status !== "lobby") {
+          return {
+            changed: false,
+            error: "Only the room host can change rules in the lobby.",
+          };
+        }
+        match.mode = body.mode === "showdown" ? "showdown" : "classroom";
+        return { changed: true };
+      }
 
       if (body.action === "start") {
         if (match.hostId !== playerId) {
