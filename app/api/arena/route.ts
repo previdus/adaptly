@@ -41,6 +41,26 @@ function ready(): Promise<void> {
         "CREATE INDEX IF NOT EXISTS multiply_arena_expiry ON multiply_arena_matches(expires)",
       )
       .run();
+    await env
+      .DB!.prepare(
+        "CREATE TABLE IF NOT EXISTS multiply_arena_signals (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL, from_player TEXT NOT NULL, to_player TEXT NOT NULL, payload TEXT NOT NULL, created_at INTEGER NOT NULL)",
+      )
+      .run();
+    await env
+      .DB!.prepare(
+        "CREATE INDEX IF NOT EXISTS multiply_arena_signal_poll ON multiply_arena_signals(code, to_player, id)",
+      )
+      .run();
+    await env
+      .DB!.prepare(
+        "CREATE TABLE IF NOT EXISTS multiply_arena_media (code TEXT NOT NULL, player_id TEXT NOT NULL, session_id TEXT NOT NULL, last_seen INTEGER NOT NULL, PRIMARY KEY(code, player_id))",
+      )
+      .run();
+    await env
+      .DB!.prepare(
+        "CREATE INDEX IF NOT EXISTS multiply_arena_media_alive ON multiply_arena_media(code, last_seen)",
+      )
+      .run();
   })());
 }
 
@@ -51,7 +71,13 @@ async function current(code: string) {
       "SELECT id, code, state, version, expires FROM multiply_arena_matches WHERE code = ? AND expires > ?",
     )
     .bind(code, Date.now())
-    .first<{ id: string; code: string; state: string; version: number; expires: number }>();
+    .first<{
+      id: string;
+      code: string;
+      state: string;
+      version: number;
+      expires: number;
+    }>();
 }
 
 async function update(
@@ -73,7 +99,9 @@ async function update(
     const tokenHash = await hash(token);
     const player = match.players.find((item) => item.tokenHash === tokenHash);
     if (!player) {
-      return { error: "This player link has expired. Rejoin with the room code." };
+      return {
+        error: "This player link has expired. Rejoin with the room code.",
+      };
     }
     const outcome = fn(match, player.id, Date.now());
     if (outcome.error) {
@@ -100,9 +128,98 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const code = (url.searchParams.get("code") || "").toUpperCase();
     const token = url.searchParams.get("token") || "";
+
+    if (url.searchParams.get("rooms") === "1") {
+      const topic = url.searchParams.get("topic");
+      if (!topics.some((t) => t.id === topic)) {
+        return json({ error: "Choose a topic first." }, 400);
+      }
+      await ready();
+      const rows = await env
+        .DB!.prepare(
+          "SELECT state FROM multiply_arena_matches WHERE expires > ? ORDER BY expires DESC LIMIT 100",
+        )
+        .bind(Date.now())
+        .all<{ state: string }>();
+      const rooms = (rows.results || [])
+        .map((row) => JSON.parse(row.state) as ArenaMatch)
+        .filter(
+          (m) =>
+            m.status === "lobby" &&
+            (m.topicId || "multiply") === topic &&
+            m.players.length > 0 &&
+            m.players.length < MAX_ARENA_PLAYERS &&
+            m.createdAt > Date.now() - 2 * 60 * 60 * 1000,
+        )
+        .map((m) => ({
+          code: m.code,
+          players: m.players.length,
+          capacity: MAX_ARENA_PLAYERS,
+        }));
+      return json({ rooms });
+    }
+
     if (!ROOM_CODE_REGEX.test(code) || !token) {
       return json({ error: "Enter a room code and join first." }, 400);
     }
+
+    if (url.searchParams.get("signals") === "1") {
+      await ready();
+      const row = await current(code);
+      if (!row) {
+        return json(
+          { error: "Room not found. Check the code and try again." },
+          404,
+        );
+      }
+      const match = JSON.parse(row.state) as ArenaMatch;
+      const tokenHash = await hash(token);
+      const player = match.players.find((p) => p.tokenHash === tokenHash);
+      if (!player) {
+        return json(
+          { error: "This player link has expired. Rejoin with the room code." },
+          404,
+        );
+      }
+      const sessionId = url.searchParams.get("sessionId") || "";
+      const media = await env
+        .DB!.prepare(
+          "SELECT session_id FROM multiply_arena_media WHERE code = ? AND player_id = ? AND session_id = ? AND last_seen > ?",
+        )
+        .bind(code, player.id, sessionId, Date.now() - 25_000)
+        .first<{ session_id: string }>();
+      if (!media) {
+        return json(
+          { error: "Reconnect your camera and mic to rejoin the call." },
+          409,
+        );
+      }
+      const since = Math.max(0, Number(url.searchParams.get("since")) || 0);
+      const signals = await env
+        .DB!.prepare(
+          "SELECT id, from_player, payload FROM multiply_arena_signals WHERE code = ? AND to_player = ? AND id > ? AND created_at > ? ORDER BY id LIMIT 100",
+        )
+        .bind(code, player.id, since, Date.now() - 5 * 60_000)
+        .all<{ id: number; from_player: string; payload: string }>();
+      const participants = await env
+        .DB!.prepare(
+          "SELECT player_id, session_id FROM multiply_arena_media WHERE code = ? AND last_seen > ?",
+        )
+        .bind(code, Date.now() - 25_000)
+        .all<{ player_id: string; session_id: string }>();
+      return json({
+        signals: (signals.results || []).map((s) => ({
+          id: s.id,
+          fromPlayer: s.from_player,
+          payload: JSON.parse(s.payload) as unknown,
+        })),
+        participants: (participants.results || []).map((p) => ({
+          playerId: p.player_id,
+          sessionId: p.session_id,
+        })),
+      });
+    }
+
     const result = await update(code, token, (match) => {
       const before = JSON.stringify(match);
       advance(match, Date.now());
@@ -113,7 +230,10 @@ export async function GET(req: Request) {
     }
     return json({ room: publicState(result.state!, result.playerId!) });
   } catch {
-    return json({ error: "The arena is taking a tiny breather. Try again." }, 503);
+    return json(
+      { error: "The arena is taking a tiny breather. Try again." },
+      503,
+    );
   }
 }
 
@@ -125,8 +245,198 @@ export async function POST(req: Request) {
     await ready();
     const body = (await req.json()) as Record<string, unknown>;
     const now = Date.now();
+    const actionName = String(body.action || "");
 
-    if (body.action === "create") {
+    if (["media-join", "media-ping", "media-leave"].includes(actionName)) {
+      const code = String(body.code || "").trim().toUpperCase();
+      const token = String(body.token || "");
+      const sessionId = String(body.sessionId || "");
+      if (
+        !ROOM_CODE_REGEX.test(code) ||
+        token.length < 20 ||
+        !/^[-a-f0-9]{36}$/i.test(sessionId)
+      ) {
+        return json(
+          { error: "Reconnect to the game before joining video chat." },
+          400,
+        );
+      }
+      const row = await current(code);
+      if (!row) {
+        return json(
+          { error: "Room not found. Check the code and try again." },
+          404,
+        );
+      }
+      const match = JSON.parse(row.state) as ArenaMatch;
+      const tokenHash = await hash(token);
+      const player = match.players.find((p) => p.tokenHash === tokenHash);
+      if (!player) {
+        return json(
+          { error: "This player link has expired. Rejoin with the room code." },
+          404,
+        );
+      }
+      if (match.status === "finished" && actionName !== "media-leave") {
+        return json({ error: "This game room has ended." }, 409);
+      }
+      if (actionName === "media-join") {
+        await env
+          .DB!.prepare(
+            "DELETE FROM multiply_arena_media WHERE code = ? AND last_seen < ?",
+          )
+          .bind(code, now - 25_000)
+          .run();
+        const existing = await env
+          .DB!.prepare(
+            "SELECT session_id FROM multiply_arena_media WHERE code = ? AND player_id = ?",
+          )
+          .bind(code, player.id)
+          .first<{ session_id: string }>();
+        if (existing && existing.session_id !== sessionId) {
+          return json(
+            {
+              error:
+                "This player already has a video chat open on another device.",
+            },
+            409,
+          );
+        }
+        const count = await env
+          .DB!.prepare(
+            "SELECT COUNT(*) AS count FROM multiply_arena_media WHERE code = ? AND last_seen > ?",
+          )
+          .bind(code, now - 25_000)
+          .first<{ count: number }>();
+        if (!existing && Number(count?.count || 0) >= 4) {
+          return json(
+            {
+              error:
+                "This game has four video spots. You can still race and cheer with your avatar.",
+            },
+            409,
+          );
+        }
+        await env
+          .DB!.prepare(
+            "INSERT INTO multiply_arena_media(code, player_id, session_id, last_seen) VALUES(?, ?, ?, ?) ON CONFLICT(code, player_id) DO UPDATE SET session_id = excluded.session_id, last_seen = excluded.last_seen",
+          )
+          .bind(code, player.id, sessionId, now)
+          .run();
+        return json({ ok: true });
+      }
+      if (actionName === "media-ping") {
+        const saved = await env
+          .DB!.prepare(
+            "UPDATE multiply_arena_media SET last_seen = ? WHERE code = ? AND player_id = ? AND session_id = ?",
+          )
+          .bind(now, code, player.id, sessionId)
+          .run();
+        if (saved.meta?.changes !== 1) {
+          return json(
+            { error: "Your video chat spot has expired. Please rejoin." },
+            409,
+          );
+        }
+        return json({ ok: true });
+      }
+      await env
+        .DB!.prepare(
+          "DELETE FROM multiply_arena_media WHERE code = ? AND player_id = ? AND session_id = ?",
+        )
+        .bind(code, player.id, sessionId)
+        .run();
+      await env
+        .DB!.prepare(
+          "DELETE FROM multiply_arena_signals WHERE code = ? AND (from_player = ? OR to_player = ?)",
+        )
+        .bind(code, player.id, player.id)
+        .run();
+      return json({ ok: true });
+    }
+
+    if (actionName === "signal") {
+      const code = String(body.code || "").trim().toUpperCase();
+      const token = String(body.token || "");
+      const target = String(body.target || "");
+      const payload = body.payload as
+        | {
+            type?: string;
+            fromSession?: string;
+            toSession?: string;
+          }
+        | undefined;
+      if (
+        !ROOM_CODE_REGEX.test(code) ||
+        token.length < 20 ||
+        !target ||
+        !["hello", "offer", "answer", "ice", "bye", "media"].includes(
+          String(payload?.type || ""),
+        ) ||
+        !/^[-a-f0-9]{36}$/i.test(String(payload?.fromSession || "")) ||
+        !/^[-a-f0-9]{36}$/i.test(String(payload?.toSession || "")) ||
+        JSON.stringify(payload).length > 16000
+      ) {
+        return json({ error: "This video-chat signal is not valid." }, 400);
+      }
+      const row = await current(code);
+      if (!row) {
+        return json(
+          { error: "Room not found. Check the code and try again." },
+          404,
+        );
+      }
+      const match = JSON.parse(row.state) as ArenaMatch;
+      const tokenHash = await hash(token);
+      const sender = match.players.find((p) => p.tokenHash === tokenHash);
+      if (
+        !sender ||
+        !match.players.some((p) => p.id === target && p.id !== sender.id)
+      ) {
+        return json(
+          { error: "You can only call someone in this game room." },
+          403,
+        );
+      }
+      if (match.status === "finished") {
+        return json({ error: "This game room has ended." }, 409);
+      }
+      const [sourceSession, targetSession] = await Promise.all([
+        env
+          .DB!.prepare(
+            "SELECT session_id FROM multiply_arena_media WHERE code = ? AND player_id = ? AND session_id = ? AND last_seen > ?",
+          )
+          .bind(code, sender.id, String(payload?.fromSession || ""), now - 25_000)
+          .first<{ session_id: string }>(),
+        env
+          .DB!.prepare(
+            "SELECT session_id FROM multiply_arena_media WHERE code = ? AND player_id = ? AND session_id = ? AND last_seen > ?",
+          )
+          .bind(code, target, String(payload?.toSession || ""), now - 25_000)
+          .first<{ session_id: string }>(),
+      ]);
+      if (!sourceSession || !targetSession) {
+        return json(
+          { error: "That player is no longer in video chat." },
+          409,
+        );
+      }
+      await env
+        .DB!.prepare(
+          "DELETE FROM multiply_arena_signals WHERE created_at < ?",
+        )
+        .bind(now - 5 * 60_000)
+        .run();
+      await env
+        .DB!.prepare(
+          "INSERT INTO multiply_arena_signals(code, from_player, to_player, payload, created_at) VALUES(?, ?, ?, ?, ?)",
+        )
+        .bind(code, sender.id, target, JSON.stringify(payload), now)
+        .run();
+      return json({ ok: true });
+    }
+
+    if (actionName === "create") {
       const name = String(body.name || "").trim().slice(0, 20);
       const topic: TopicId = topics.some((item) => item.id === body.topicId)
         ? (body.topicId as TopicId)
@@ -184,7 +494,7 @@ export async function POST(req: Request) {
       return json({ error: "Could not open a room. Try once more." }, 503);
     }
 
-    if (body.action === "join") {
+    if (actionName === "join") {
       const code = String(body.code || "").trim().toUpperCase();
       const name = String(body.name || "").trim().slice(0, 20);
       if (!ROOM_CODE_REGEX.test(code) || !name) {
@@ -195,7 +505,10 @@ export async function POST(req: Request) {
       }
       const row = await current(code);
       if (!row) {
-        return json({ error: "Room not found. Check the code and try again." }, 404);
+        return json(
+          { error: "Room not found. Check the code and try again." },
+          404,
+        );
       }
       const match = JSON.parse(row.state) as ArenaMatch;
       if (match.status !== "lobby") {
@@ -257,7 +570,7 @@ export async function POST(req: Request) {
       advance(match, timestamp);
       const player = match.players.find((item) => item.id === playerId)!;
 
-      if (body.action === "mode") {
+      if (actionName === "mode") {
         if (match.hostId !== playerId || match.status !== "lobby") {
           return {
             changed: false,
@@ -268,24 +581,40 @@ export async function POST(req: Request) {
         return { changed: true };
       }
 
-      if (body.action === "start") {
+      if (actionName === "start") {
         if (match.hostId !== playerId) {
-          return { changed: false, error: "Only the room host can start the match." };
+          return {
+            changed: false,
+            error: "Only the room host can start the match.",
+          };
         }
         if (match.status !== "lobby" || match.players.length < 2) {
-          return { changed: false, error: "Invite at least one more player first." };
+          return {
+            changed: false,
+            error: "Invite at least one more player first.",
+          };
         }
         match.round = 0;
         beginRound(match, timestamp);
         return { changed: true };
       }
 
-      if (body.action === "answer") {
-        if (match.status !== "playing" || player.lives <= 0 || match.roundStartedAt <= 0) {
-          return { changed: false, error: "This round is not accepting answers now." };
+      if (actionName === "answer") {
+        if (
+          match.status !== "playing" ||
+          player.lives <= 0 ||
+          match.roundStartedAt <= 0
+        ) {
+          return {
+            changed: false,
+            error: "This round is not accepting answers now.",
+          };
         }
         if (match.answers[playerId]) {
-          return { changed: false, error: "Your answer is already locked in." };
+          return {
+            changed: false,
+            error: "Your answer is already locked in.",
+          };
         }
         const question = bankById.get(match.questionIds[match.round]);
         if (!question) {
@@ -294,7 +623,10 @@ export async function POST(req: Request) {
         let value: number | string;
         let correct: boolean;
         if (question.options) {
-          if (typeof body.value !== "string" || !question.options.includes(body.value)) {
+          if (
+            typeof body.value !== "string" ||
+            !question.options.includes(body.value)
+          ) {
             return { changed: false, error: "Choose one of the answers." };
           }
           value = body.value;
@@ -323,7 +655,7 @@ export async function POST(req: Request) {
         return { changed: true };
       }
 
-      if (body.action === "leave") {
+      if (actionName === "leave") {
         if (match.status === "lobby") {
           match.players = match.players.filter((item) => item.id !== playerId);
           if (match.hostId === playerId && match.players[0]) {

@@ -157,6 +157,10 @@ export default function Page() {
 
   useEffect(() => {
     started.current = Date.now();
+    const roomParam = new URLSearchParams(location.search).get('room');
+    if (roomParam && /^[A-HJ-NP-Z2-9]{5}$/i.test(roomParam)) {
+      setTimeout(() => setView('arena'), 0);
+    }
     fetch('/api/family')
       .then((r) => r.json() as Promise<FamilyApiResponse>)
       .then((d) => {

@@ -291,30 +291,36 @@ async function testPlaywrightMultiBrowserSubstance() {
     await guestPage.waitForSelector(".arena-entry-card", { timeout: 10000 });
 
     // Host creates a Fair Classroom room in UI
-    await hostPage.fill("#arena-player-name", "Clara");
-    await hostPage.selectOption("#arena-mode-select", "classroom");
-    await hostPage.click("button:has-text('Create a new room')");
+    await hostPage.waitForSelector(".arena-open-rooms", { timeout: 10000 });
+    await hostPage.fill("input[placeholder='Your name']", "Clara");
+    await hostPage.selectOption("select[aria-label='Room rule mode']", "classroom");
+    await hostPage.click("button:has-text('Create a room')");
     await hostPage.waitForSelector(".arena-code-ticket b", { timeout: 10000 });
+    await hostPage.waitForSelector("text=Last Star call", { timeout: 10000 });
     const roomCode = (
       await hostPage.textContent(".arena-code-ticket b")
     )?.trim();
     assert.match(roomCode, /^[A-HJ-NP-Z2-9]{5}$/);
 
     // Verify 1/35 PLAYERS badge in lobby
-    const countBadge1 = await hostPage.textContent(".arena-panel-head > span");
-    assert.equal(countBadge1?.trim(), "1/35 PLAYERS");
+    const lobbyKicker1 = await hostPage.textContent(".arena-lobby-title .arena-kicker");
+    assert.ok(
+      lobbyKicker1?.includes("1/35 PLAYERS"),
+      `Expected 1/35 PLAYERS in lobby kicker, got: ${lobbyKicker1}`,
+    );
 
     // Guest joins using the 5-letter room code in UI
-    await guestPage.fill("#arena-player-name", "Felix");
-    await guestPage.fill("#arena-room-code", roomCode);
-    await guestPage.click("button:has-text('Join with code')");
+    await guestPage.fill("input[placeholder='Your name']", "Felix");
+    await guestPage.fill(".room-code-input", roomCode);
+    await guestPage.click("button:has-text('Join the room')");
     await guestPage.waitForSelector(".arena-code-ticket b", { timeout: 10000 });
 
     // Wait for Host lobby to poll and see 2/35 PLAYERS
     await hostPage.waitForFunction(
       () =>
-        document.querySelector(".arena-panel-head > span")?.textContent?.trim() ===
-        "2/35 PLAYERS",
+        document
+          .querySelector(".arena-lobby-title .arena-kicker")
+          ?.textContent?.includes("2/35 PLAYERS"),
       { timeout: 10000 },
     );
 

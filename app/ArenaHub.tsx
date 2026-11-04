@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
+import ArenaCall from './ArenaCall';
 import {
   ArrowLeft,
   ArrowRight,
@@ -146,11 +147,55 @@ export default function ArenaHub({
   const [preferredMode, setPreferredMode] = useState<'classroom' | 'showdown'>(
     'classroom'
   );
+  const [waitingRooms, setWaitingRooms] = useState<
+    Array<{ code: string; players: number; capacity: number }>
+  >([]);
+  const [roomsLoading, setRoomsLoading] = useState(true);
+  const [roomsError, setRoomsError] = useState('');
 
   const label = topicLabel(room?.topicId || topicId);
   const roomCode = room?.code || '';
   const activeMode = room?.mode ?? preferredMode;
   const maxPlayers = room?.maxPlayers ?? 35;
+  const hasRoom = Boolean(room);
+
+  useEffect(() => {
+    if (hasRoom) return;
+    let alive = true;
+    const refresh = async () => {
+      try {
+        const response = await fetch(
+          `/api/arena?rooms=1&topic=${encodeURIComponent(topicId)}`,
+          { cache: 'no-store' }
+        );
+        const data = (await response.json()) as {
+          error?: string;
+          rooms: Array<{ code: string; players: number; capacity: number }>;
+        };
+        if (!response.ok) {
+          throw new Error(data.error || 'Could not load rooms.');
+        }
+        if (alive) {
+          setWaitingRooms(data.rooms);
+          setRoomsError('');
+        }
+      } catch {
+        if (alive) {
+          setRoomsError('Could not load rooms. Retrying…');
+        }
+      } finally {
+        if (alive) {
+          setRoomsLoading(false);
+        }
+      }
+    };
+    void refresh();
+    const timer = setInterval(() => void refresh(), 5000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [topicId, hasRoom]);
 
   const load = useCallback(async (c: string, t: string, syncSession = false) => {
     if (!c || !t) return;
@@ -169,7 +214,9 @@ export default function ArenaHub({
       }
       setRoom(d.room);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'The room is no longer available.');
+      setError(
+        e instanceof Error ? e.message : 'The room is no longer available.'
+      );
     }
   }, []);
 
@@ -189,6 +236,11 @@ export default function ArenaHub({
   useEffect(() => {
     const id = setTimeout(() => {
       try {
+        const invite = new URLSearchParams(location.search).get('room');
+        if (invite && /^[A-HJ-NP-Z2-9]{5}$/i.test(invite)) {
+          setCode(invite.toUpperCase());
+          return;
+        }
         const last = sessionStorage.getItem('mq-arena-last');
         if (last) {
           const saved = initialRoom(sessionStorage, last);
@@ -213,7 +265,7 @@ export default function ArenaHub({
     : 0;
   const elapsed = room?.question ? Math.max(0, Math.min(100, 100 - pct)) : 0;
 
-  async function enter(actionKind: 'create' | 'join') {
+  async function enter(actionKind: 'create' | 'join', inviteCode?: string) {
     setBusy(true);
     setError('');
     try {
@@ -225,7 +277,11 @@ export default function ArenaHub({
               topicId,
               mode: preferredMode,
             }
-          : { action: actionKind, code: code.trim(), name: playerName.trim() }
+          : {
+              action: actionKind,
+              code: (inviteCode || code).trim(),
+              name: playerName.trim(),
+            }
       );
       setRoom(d.room);
       if (d.token && d.code) {
@@ -266,6 +322,40 @@ export default function ArenaHub({
       setTimeout(() => setCopied(false), 1500);
     } catch {
       setError('Your room code is ' + room?.code);
+    }
+  }
+
+  function roomUrl() {
+    const url = new URL(location.href);
+    url.searchParams.set('room', room?.code || '');
+    return url.toString();
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(roomUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setError('Your room link: ' + roomUrl());
+    }
+  }
+
+  async function shareLink() {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Join my Adaptly room',
+          text: 'Come play Last Star Standing with me!',
+          url: roomUrl(),
+        });
+      } else {
+        await copyLink();
+      }
+    } catch (e: unknown) {
+      if (!(e instanceof DOMException && e.name === 'AbortError')) {
+        await copyLink();
+      }
     }
   }
 
@@ -402,6 +492,35 @@ export default function ArenaHub({
             >
               <Sparkles size={17} /> Create a room <ArrowRight size={17} />
             </button>
+            <div className="arena-open-rooms">
+              <h3>Join a waiting room</h3>
+              <p>{label} · Rooms refresh automatically</p>
+              {roomsError ? (
+                <p role="status">{roomsError}</p>
+              ) : roomsLoading ? (
+                <p role="status">Finding rooms…</p>
+              ) : waitingRooms.length === 0 ? (
+                <p>No rooms waiting yet. Start the first one!</p>
+              ) : (
+                waitingRooms.map((waiting) => (
+                  <div className="arena-open-room" key={waiting.code}>
+                    <div>
+                      <b>Room {waiting.code}</b>
+                      <small>
+                        {waiting.players} / {waiting.capacity} players · Waiting
+                        to start
+                      </small>
+                    </div>
+                    <button
+                      disabled={busy || !playerName.trim()}
+                      onClick={() => void enter('join', waiting.code)}
+                    >
+                      Join →
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
             <div className="arena-divider">
               <span>OR JOIN A FRIEND</span>
             </div>
@@ -437,393 +556,439 @@ export default function ArenaHub({
         </section>
       )}
 
-      {room?.status === 'lobby' && (
-        <section className="arena-room-lobby">
-          <div className="arena-lobby-title">
-            <div>
-              <span className="arena-kicker">
-                ROOM IS READY · {room.players.length}/{maxPlayers} PLAYERS
-              </span>
-              <h1>Call your crew!</h1>
-              <p>Share the code. The countdown starts when the host is ready.</p>
-            </div>
-            <div className="arena-code-ticket">
-              <span>ROOM CODE</span>
-              <b>{room.code}</b>
-              <button onClick={() => void copyCode()}>
-                {copied ? <Check size={16} /> : <Copy size={16} />}{' '}
-                {copied ? 'Copied' : 'Copy code'}
-              </button>
-            </div>
-          </div>
+      {room && room.status !== 'finished' && (
+        <section className="arena-room-stage">
+          <ArenaCall
+            code={room.code}
+            token={token}
+            playerId={room.playerId}
+            players={room.players}
+            status={room.status}
+            questionLive={Boolean(room.question)}
+          />
 
-          <div className="arena-lobby-grid">
-            <section className="arena-player-list">
-              <div className="arena-panel-head">
-                <h2>
-                  <Users size={18} /> Your players
-                </h2>
-                <span>{room.players.length} joined</span>
-              </div>
-              {room.players.map((p, i) => (
-                <div className="arena-lobby-player" key={p.id}>
-                  <span className={'arena-player-avatar av' + (i % 8)}>
-                    {' '}
-                    {['🚀', '🦊', '🐸', '🦄', '🐼', '🐙', '🐯', '🐝'][i % 8]}
-                  </span>
-                  <div>
-                    <b>
-                      {p.name}
-                      {p.isYou ? ' (you)' : ''}
-                    </b>
-                    <small>{i === 0 ? 'ROOM HOST' : 'READY TO RACE'}</small>
-                  </div>
-                  {i === 0 && <Medal size={19} className="arena-host-medal" />}
-                  <span className="arena-ready-dot" />
-                </div>
-              ))}
-              {room.players.length < 2 && (
-                <div className="arena-empty-seat">
-                  <span>✧</span>
-                  <p>Waiting for another player…</p>
-                </div>
-              )}
-              <div className="arena-invite">
-                <span>↗</span> Send the room code to classmates, friends, or family
-              </div>
-            </section>
-
-            <section className="arena-rules">
-              <div className="arena-rule-number">01</div>
-              <h2>
-                {activeMode === 'classroom'
-                  ? 'Fair Classroom Rules'
-                  : 'Sudden-Death Showdown'}
-              </h2>
-              {room.isHost && (
-                <div className="arena-mode-toggle" role="group" aria-label="Rule mode">
-                  <button
-                    type="button"
-                    className={`arena-mode-btn${
-                      activeMode === 'classroom' ? ' active' : ''
-                    }`}
-                    disabled={busy}
-                    onClick={() => void action('mode', { mode: 'classroom' })}
-                  >
-                    Fair Classroom
-                  </button>
-                  <button
-                    type="button"
-                    className={`arena-mode-btn${
-                      activeMode === 'showdown' ? ' active' : ''
-                    }`}
-                    disabled={busy}
-                    onClick={() => void action('mode', { mode: 'showdown' })}
-                  >
-                    Sudden Death
-                  </button>
-                </div>
-              )}
-              <div className="arena-rule">
-                <span className="rule-heart">♥ ♥ ♥</span>
-                <p>
-                  Everyone starts with <b>3 lives</b>.
-                </p>
-              </div>
-              {activeMode === 'classroom' ? (
-                <>
-                  <div className="arena-rule">
-                    <span className="rule-bolt">✓</span>
-                    <p>
-                      <b>Every accurate answer</b> keeps your heart (+100 pts),
-                      and the fastest thinker wins a <b>+50 speed bonus</b>.
-                    </p>
-                  </div>
-                  <div className="arena-rule">
-                    <span className="rule-crack">💔</span>
-                    <p>
-                      Only wrong answers or timeouts lose a heart. Zero lives?
-                      Watch and cheer!
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="arena-rule">
-                    <span className="rule-bolt">⚡</span>
-                    <p>
-                      The <b>fastest correct answer</b> stays safe.
-                    </p>
-                  </div>
-                  <div className="arena-rule">
-                    <span className="rule-crack">💔</span>
-                    <p>
-                      Everyone else loses a life. Zero lives? Watch and cheer!
-                    </p>
-                  </div>
-                </>
-              )}
-              <div className="arena-rule">
-                <span className="rule-crown">👑</span>
-                <p>Most hearts and top score win the crown.</p>
-              </div>
-              {room.isHost ? (
-                <button
-                  className="arena-start"
-                  disabled={!room.canStart || busy}
-                  onClick={() => void action('start')}
-                >
-                  <Play size={18} fill="currentColor" />{' '}
-                  {room.players.length < 2
-                    ? 'Waiting for players…'
-                    : 'Start the match!'}
-                </button>
-              ) : (
-                <div className="arena-wait-host">
-                  <Hourglass size={18} /> Waiting for {room.players[0]?.name} to
-                  start…
-                </div>
-              )}
-              <small className="arena-bank-note">
-                {room.totalRounds} {room.topicLabel || label} questions · 2–
-                {maxPlayers} players · Timer grows with the challenge
-              </small>
-            </section>
-          </div>
-        </section>
-      )}
-
-      {room?.status === 'playing' && (
-        <section className="arena-live">
-          <div className="arena-live-heading">
-            <div>
-              <span className="arena-kicker">
-                <span className="arena-live-dot" /> LIVE ROUND {room.round}
-              </span>
-              <h1>
-                {room.myLife > 0
-                  ? 'Keep your hearts!'
-                  : 'You’re watching the showdown!'}
-              </h1>
-            </div>
-            <div
-              className="arena-heart-count"
-              aria-label={`${room.myLife} lives remaining`}
-            >
-              <span>
-                {Array.from({ length: 3 }, (_, i) => (
-                  <Heart
-                    key={i}
-                    size={20}
-                    fill={i < room.myLife ? 'currentColor' : 'transparent'}
-                    className={i < room.myLife ? 'heart-on' : 'heart-off'}
-                  />
-                ))}
-              </span>
-              <b>
-                {room.myLife}
-                <small> / 3</small>
-              </b>
-            </div>
-          </div>
-
-          <div className="arena-live-layout">
-            <section className="arena-question-panel">
-              <div className="arena-question-top">
-                <span>
-                  QUESTION {room.round} <i>·</i> {room.question?.concept}
-                </span>
-                <span className={pct < 25 ? 'timer-hot' : ''}>
-                  <Hourglass size={15} /> {Math.ceil(timeLeft)}
-                  <small>s</small>
-                </span>
-              </div>
-              <div className="arena-timer-track">
-                <span
-                  className={pct < 25 ? 'timer-hot' : ''}
-                  style={{ width: pct + '%' }}
-                />
-              </div>
-              <div
-                className="arena-countdown-ring"
-                style={{ '--progress': `${elapsed}%` } as CSSProperties}
-              >
+          {room.status === 'lobby' && (
+            <section className="arena-room-lobby">
+              <div className="arena-lobby-title">
                 <div>
-                  <b>{Math.ceil(timeLeft)}</b>
-                  <small>SECONDS</small>
+                  <span className="arena-kicker">
+                    ROOM IS READY · {room.players.length}/{maxPlayers} PLAYERS
+                  </span>
+                  <h1>Your room is ready!</h1>
+                  <p>
+                    Share the code. The countdown starts when the host is ready.
+                  </p>
+                </div>
+                <div className="arena-code-ticket">
+                  <div className="arena-invite-heading">
+                    <span>INVITE YOUR FRIENDS</span>
+                    <small>Share a link or send the room code</small>
+                  </div>
+                  <div className="arena-invite-actions">
+                    <b aria-label="Room code">{room.code}</b>
+                    <button onClick={() => void copyCode()}>
+                      {copied ? <Check size={16} /> : <Copy size={16} />}{' '}
+                      {copied ? 'Copied' : 'Copy code'}
+                    </button>
+                    <button onClick={() => void copyLink()}>Copy link</button>
+                    <button onClick={() => void shareLink()}>Share ↗</button>
+                  </div>
                 </div>
               </div>
-              <div className="arena-question-copy">
-                {room.question ? (
-                  <>
-                    <span className="arena-question-kicker">
-                      {activeMode === 'classroom'
-                        ? '✓ ACCURATE ANSWERS KEEP HEARTS · FASTEST WINS SPEED BONUS'
-                        : '⚡ FIRST CORRECT ANSWER WINS SAFETY'}
-                    </span>
-                    <h2>{room.question.prompt}</h2>
-                  </>
+
+              <div className="arena-lobby-start">
+                {room.isHost ? (
+                  <button
+                    className="arena-start"
+                    disabled={!room.canStart || busy}
+                    onClick={() => void action('start')}
+                  >
+                    <Play size={18} fill="currentColor" />{' '}
+                    {room.players.length < 2
+                      ? 'Waiting for players…'
+                      : 'Start the match!'}
+                  </button>
                 ) : (
-                  <>
-                    <span className="arena-question-kicker">ROUND COMPLETE</span>
-                    <h2>The next question is loading…</h2>
-                  </>
+                  <div className="arena-wait-host">
+                    <Hourglass size={18} /> Waiting for {room.players[0]?.name}{' '}
+                    to start…
+                  </div>
                 )}
               </div>
 
-              {you?.active &&
-                room.question &&
-                !room.hasAnswered &&
-                (room.question.options ? (
-                  <div
-                    className="arena-choice-grid"
-                    role="group"
-                    aria-label="Choose an answer"
-                  >
-                    {room.question.options.map((option, i) => (
-                      <button
-                        key={option}
-                        disabled={busy}
-                        onClick={() => void action('answer', { value: option })}
-                      >
-                        <b>{String.fromCharCode(65 + i)}</b>
-                        {option}
-                      </button>
-                    ))}
+              <div className="arena-lobby-grid">
+                <section className="arena-player-list">
+                  <div className="arena-panel-head">
+                    <h2>
+                      <Users size={18} /> Your room
+                    </h2>
+                    <span>{room.players.length} joined</span>
                   </div>
-                ) : (
-                  <form
-                    className="arena-answer-form"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      if (answer.trim()) {
-                        void action('answer', { value: answer });
-                      }
-                    }}
-                  >
-                    <input
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      autoComplete="off"
-                      value={answer}
-                      onChange={(e) =>
-                        setAnswer(e.target.value.replace(/\D/g, '').slice(0, 9))
-                      }
-                      placeholder="Your answer"
-                      aria-label="Your answer"
-                      disabled={busy || room.hasAnswered}
-                      autoFocus
-                    />
-                    <button
-                      disabled={busy || room.hasAnswered || !answer.trim()}
+                  <div id="arena-call-lobby" />
+                  {room.players.map((p, i) => (
+                    <div className="arena-lobby-player" key={p.id}>
+                      <span className={'arena-player-avatar av' + (i % 8)}>
+                        {' '}
+                        {['🚀', '🦊', '🐸', '🦄', '🐼', '🐙', '🐯', '🐝'][i % 8]}
+                      </span>
+                      <div>
+                        <b>
+                          {p.name}
+                          {p.isYou ? ' (you)' : ''}
+                        </b>
+                        <small>{i === 0 ? 'ROOM HOST' : 'READY TO RACE'}</small>
+                      </div>
+                      {i === 0 && (
+                        <Medal size={19} className="arena-host-medal" />
+                      )}
+                      <span className="arena-ready-dot" />
+                    </div>
+                  ))}
+                  {room.players.length < 2 && (
+                    <div className="arena-empty-seat">
+                      <span>✧</span>
+                      <p>Waiting for another player…</p>
+                    </div>
+                  )}
+                  <div className="arena-invite">
+                    <span>↗</span> Share the room code to invite your friends
+                  </div>
+                </section>
+
+                <section className="arena-rules">
+                  <div className="arena-rule-number">01</div>
+                  <h2>
+                    {activeMode === 'classroom'
+                      ? 'Fair Classroom Rules'
+                      : 'Sudden-Death Showdown'}
+                  </h2>
+                  {room.isHost && (
+                    <div
+                      className="arena-mode-toggle"
+                      role="group"
+                      aria-label="Rule mode"
                     >
-                      {room.hasAnswered ? 'Locked in!' : 'Lock it in'}{' '}
-                      <ArrowRight size={16} />
-                    </button>
-                  </form>
-                ))}
-
-              {you?.active && room.hasAnswered && room.question && (
-                <div className="arena-locked">
-                  <Check size={17} /> Answer locked. Stay sharp — lives update
-                  when the round ends.
-                </div>
-              )}
-
-              {you && !you.active && (
-                <div className="arena-spectator-note">
-                  <span>🎟️</span>
-                  <div>
-                    <b>Front-row spectator!</b>
-                    <small>
-                      Your race is over, but you can still watch every round.
-                    </small>
+                      <button
+                        type="button"
+                        className={`arena-mode-btn${
+                          activeMode === 'classroom' ? ' active' : ''
+                        }`}
+                        disabled={busy}
+                        onClick={() =>
+                          void action('mode', { mode: 'classroom' })
+                        }
+                      >
+                        Fair Classroom
+                      </button>
+                      <button
+                        type="button"
+                        className={`arena-mode-btn${
+                          activeMode === 'showdown' ? ' active' : ''
+                        }`}
+                        disabled={busy}
+                        onClick={() =>
+                          void action('mode', { mode: 'showdown' })
+                        }
+                      >
+                        Sudden Death
+                      </button>
+                    </div>
+                  )}
+                  <div className="arena-rule">
+                    <span className="rule-heart">♥ ♥ ♥</span>
+                    <p>
+                      Everyone starts with <b>3 lives</b>.
+                    </p>
                   </div>
-                </div>
-              )}
-
-              {room.nextAt > now && (
-                <div className="arena-round-result">
-                  <Sparkles size={18} />
-                  <span>
-                    {room.history.at(-1)?.safeId === room.playerId ? (
-                      <>You were fastest correct — speed bonus + hearts safe!</>
-                    ) : room.history.at(-1)?.lostIds.includes(room.playerId) ? (
-                      room.hasAnswered && room.myAnswerCorrect ? (
-                        <>Correct, but another racer was quicker.</>
-                      ) : (
-                        <>Try again next round.</>
-                      )
-                    ) : room.hasAnswered && room.myAnswerCorrect ? (
-                      <>Accurate answer — your hearts are safe!</>
-                    ) : (
-                      room.history.at(-1)?.message
-                    )}
-                  </span>
-                  <small>Next round loading…</small>
-                </div>
-              )}
-
-              <div className="arena-wait-players">
-                {active.filter((p) => p.answered).length} of {active.length}{' '}
-                racers locked in{' '}
-                <span>
-                  {active
-                    .filter((p) => p.answered)
-                    .map(() => '✓')
-                    .join(' ') || '…'}
-                </span>
+                  {activeMode === 'classroom' ? (
+                    <>
+                      <div className="arena-rule">
+                        <span className="rule-bolt">✓</span>
+                        <p>
+                          <b>Every accurate answer</b> keeps your heart (+100
+                          pts), and the fastest thinker wins a{' '}
+                          <b>+50 speed bonus</b>.
+                        </p>
+                      </div>
+                      <div className="arena-rule">
+                        <span className="rule-crack">💔</span>
+                        <p>
+                          Only wrong answers or timeouts lose a heart. Zero
+                          lives? Watch and cheer!
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="arena-rule">
+                        <span className="rule-bolt">⚡</span>
+                        <p>
+                          The <b>fastest correct answer</b> stays safe.
+                        </p>
+                      </div>
+                      <div className="arena-rule">
+                        <span className="rule-crack">💔</span>
+                        <p>
+                          Everyone else loses a life. Zero lives? Watch and
+                          cheer!
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  <div className="arena-rule">
+                    <span className="rule-crown">👑</span>
+                    <p>Most hearts and top score win the crown.</p>
+                  </div>
+                  <small className="arena-bank-note">
+                    {room.totalRounds} {room.topicLabel || label} questions · 2–
+                    {maxPlayers} players · Timer grows with the challenge
+                  </small>
+                </section>
               </div>
             </section>
+          )}
 
-            <aside className="arena-scoreboard">
-              <div className="arena-score-head">
-                <h2>
-                  <Trophy size={18} /> Live standings
-                </h2>
-                <span>{active.length} IN</span>
-              </div>
-              {room.players.map((p, i) => (
-                <div
-                  key={p.id}
-                  className={
-                    'arena-score-player ' +
-                    (!p.active ? 'is-out ' : '') +
-                    (p.isYou ? 'is-you' : '')
-                  }
-                >
-                  <span className="arena-rank-number">
-                    {i === 0 && p.active ? '👑' : `${i + 1}`}
+          {room.status === 'playing' && (
+            <section className="arena-live">
+              <div className="arena-live-heading">
+                <div>
+                  <span className="arena-kicker">
+                    <span className="arena-live-dot" /> LIVE ROUND {room.round}
                   </span>
-                  <div className="arena-score-name">
-                    <b>
-                      {p.name}
-                      {p.isYou ? ' · YOU' : ''}
-                    </b>
-                    <small>
-                      {p.active
-                        ? p.answered
-                          ? 'ANSWER LOCKED'
-                          : 'THINKING…'
-                        : 'SPECTATING'}
-                    </small>
-                  </div>
-                  <span
-                    className="arena-score-lives"
-                    aria-label={`${p.lives} lives`}
-                  >
-                    {Array.from({ length: 3 }, (_, j) => (
-                      <i key={j} className={j < p.lives ? '' : 'spent'} />
+                  <h1>
+                    {room.myLife > 0
+                      ? 'Keep your hearts!'
+                      : 'You’re watching the showdown!'}
+                  </h1>
+                </div>
+                <div
+                  className="arena-heart-count"
+                  aria-label={`${room.myLife} lives remaining`}
+                >
+                  <span>
+                    {Array.from({ length: 3 }, (_, i) => (
+                      <Heart
+                        key={i}
+                        size={20}
+                        fill={i < room.myLife ? 'currentColor' : 'transparent'}
+                        className={i < room.myLife ? 'heart-on' : 'heart-off'}
+                      />
                     ))}
                   </span>
-                  <b className="arena-score-points">{p.score}</b>
+                  <b>
+                    {room.myLife}
+                    <small> / 3</small>
+                  </b>
                 </div>
-              ))}
-              <div className="arena-score-foot">
-                <Flame size={15} /> Top score breaks a final tie
               </div>
-            </aside>
-          </div>
+
+              <div className="arena-live-layout">
+                <section className="arena-question-panel">
+                  <div className="arena-question-top">
+                    <span>
+                      QUESTION {room.round} <i>·</i> {room.question?.concept}
+                    </span>
+                    <span className={pct < 25 ? 'timer-hot' : ''}>
+                      <Hourglass size={15} /> {Math.ceil(timeLeft)}
+                      <small>s</small>
+                    </span>
+                  </div>
+                  <div className="arena-timer-track">
+                    <span
+                      className={pct < 25 ? 'timer-hot' : ''}
+                      style={{ width: pct + '%' }}
+                    />
+                  </div>
+                  <div
+                    className="arena-countdown-ring"
+                    style={{ '--progress': `${elapsed}%` } as CSSProperties}
+                  >
+                    <div>
+                      <b>{Math.ceil(timeLeft)}</b>
+                      <small>SECONDS</small>
+                    </div>
+                  </div>
+                  <div className="arena-question-copy">
+                    {room.question ? (
+                      <>
+                        <span className="arena-question-kicker">
+                          {activeMode === 'classroom'
+                            ? '✓ ACCURATE ANSWERS KEEP HEARTS · FASTEST WINS SPEED BONUS'
+                            : '⚡ FIRST CORRECT ANSWER WINS SAFETY'}
+                        </span>
+                        <h2>{room.question.prompt}</h2>
+                      </>
+                    ) : (
+                      <>
+                        <span className="arena-question-kicker">
+                          ROUND COMPLETE
+                        </span>
+                        <h2>The next question is loading…</h2>
+                      </>
+                    )}
+                  </div>
+
+                  {you?.active &&
+                    room.question &&
+                    !room.hasAnswered &&
+                    (room.question.options ? (
+                      <div
+                        className="arena-choice-grid"
+                        role="group"
+                        aria-label="Choose an answer"
+                      >
+                        {room.question.options.map((option, i) => (
+                          <button
+                            key={option}
+                            disabled={busy}
+                            onClick={() =>
+                              void action('answer', { value: option })
+                            }
+                          >
+                            <b>{String.fromCharCode(65 + i)}</b>
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <form
+                        className="arena-answer-form"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (answer.trim()) {
+                            void action('answer', { value: answer });
+                          }
+                        }}
+                      >
+                        <input
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          autoComplete="off"
+                          value={answer}
+                          onChange={(e) =>
+                            setAnswer(e.target.value.replace(/\D/g, '').slice(0, 9))
+                          }
+                          placeholder="Your answer"
+                          aria-label="Your answer"
+                          disabled={busy || room.hasAnswered}
+                          autoFocus
+                        />
+                        <button
+                          disabled={
+                            busy || room.hasAnswered || !answer.trim()
+                          }
+                        >
+                          {room.hasAnswered ? 'Locked in!' : 'Lock it in'}{' '}
+                          <ArrowRight size={16} />
+                        </button>
+                      </form>
+                    ))}
+
+                  {you?.active && room.hasAnswered && room.question && (
+                    <div className="arena-locked">
+                      <Check size={17} /> Answer locked. Stay sharp — lives
+                      update when the round ends.
+                    </div>
+                  )}
+
+                  {you && !you.active && (
+                    <div className="arena-spectator-note">
+                      <span>🎟️</span>
+                      <div>
+                        <b>Front-row spectator!</b>
+                        <small>
+                          Your race is over, but you can still watch every
+                          round.
+                        </small>
+                      </div>
+                    </div>
+                  )}
+
+                  {room.nextAt > now && (
+                    <div className="arena-round-result">
+                      <Sparkles size={18} />
+                      <span>
+                        {room.history.at(-1)?.safeId === room.playerId ? (
+                          <>You were fastest correct — hearts safe!</>
+                        ) : room.history
+                            .at(-1)
+                            ?.lostIds.includes(room.playerId) ? (
+                          room.hasAnswered && room.myAnswerCorrect ? (
+                            <>Correct, but another racer was quicker.</>
+                          ) : (
+                            <>Try again next round.</>
+                          )
+                        ) : (
+                          room.history.at(-1)?.message
+                        )}
+                      </span>
+                      <small>Next round loading…</small>
+                    </div>
+                  )}
+
+                  <div className="arena-wait-players">
+                    {active.filter((p) => p.answered).length} of {active.length}{' '}
+                    racers locked in{' '}
+                    <span>
+                      {active
+                        .filter((p) => p.answered)
+                        .map(() => '✓')
+                        .join(' ') || '…'}
+                    </span>
+                  </div>
+                </section>
+
+                <aside className="arena-scoreboard">
+                  <div className="arena-score-head">
+                    <h2>
+                      <Trophy size={18} /> Live standings
+                    </h2>
+                    <span>{active.length} IN</span>
+                  </div>
+                  <div id="arena-call-standings" />
+                  {room.players.map((p, i) => (
+                    <div
+                      key={p.id}
+                      className={
+                        'arena-score-player ' +
+                        (!p.active ? 'is-out ' : '') +
+                        (p.isYou ? 'is-you' : '')
+                      }
+                    >
+                      <span className="arena-rank-number">
+                        {i === 0 && p.active ? '👑' : `${i + 1}`}
+                      </span>
+                      <div className="arena-score-name">
+                        <b>
+                          {p.name}
+                          {p.isYou ? ' · YOU' : ''}
+                        </b>
+                        <small>
+                          {p.active
+                            ? p.answered
+                              ? 'ANSWER LOCKED'
+                              : 'THINKING…'
+                            : 'SPECTATING'}
+                        </small>
+                      </div>
+                      <span
+                        className="arena-score-lives"
+                        aria-label={`${p.lives} lives`}
+                      >
+                        {Array.from({ length: 3 }, (_, j) => (
+                          <i key={j} className={j < p.lives ? '' : 'spent'} />
+                        ))}
+                      </span>
+                      <b className="arena-score-points">{p.score}</b>
+                    </div>
+                  ))}
+                  <div className="arena-score-foot">
+                    <Flame size={15} /> Top score breaks a final tie
+                  </div>
+                </aside>
+              </div>
+            </section>
+          )}
         </section>
       )}
 
@@ -839,7 +1004,7 @@ export default function ArenaHub({
             {winner?.id === room.playerId
               ? 'You outlasted everyone. That was brilliant!'
               : winner
-                ? `${winner.name} was the last player with a heart.`
+                ? `${winner.name} won the match.`
                 : 'Every racer gave it their all.'}
           </p>
           <div className="arena-final-board">
