@@ -3,6 +3,7 @@ import { questionBank, topicLabel, type GameQuestion } from "./topic-bank";
 
 export type ArenaMode = "classroom" | "showdown";
 export const MAX_ARENA_PLAYERS = 35;
+export const CLASSROOM_MATCH_ROUNDS = 10;
 
 export interface ArenaPlayer {
   id: string;
@@ -76,13 +77,37 @@ export function newCode(): string {
 export function buildMatchQuestionOrder(topic: TopicId): string[] {
   const bank = questionBank(topic);
   const steps = [...new Set(bank.map((q) => q.step))].sort((a, b) => a - b);
-  return steps.flatMap((step) =>
+  const buckets = steps.map((step) =>
     fisherYates(bank.filter((q) => q.step === step).map((q) => q.id)),
   );
+  const perPass = Math.max(1, Math.floor(CLASSROOM_MATCH_ROUNDS / steps.length));
+  const ordered: string[] = [];
+
+  let added = true;
+  while (added) {
+    added = false;
+    for (const bucket of buckets) {
+      for (let i = 0; i < perPass && bucket.length > 0; i++) {
+        ordered.push(bucket.shift()!);
+        added = true;
+      }
+    }
+  }
+
+  return ordered;
 }
 
 export function resolveArenaMode(match: Pick<ArenaMatch, "mode">): ArenaMode {
   return match.mode === "showdown" ? "showdown" : "classroom";
+}
+
+export function totalRoundsForMatch(
+  match: Pick<ArenaMatch, "mode" | "questionIds">,
+): number {
+  const mode = resolveArenaMode(match);
+  return mode === "classroom"
+    ? Math.min(CLASSROOM_MATCH_ROUNDS, match.questionIds.length)
+    : match.questionIds.length;
 }
 
 export function publicState(match: ArenaMatch, playerId: string) {
@@ -92,6 +117,7 @@ export function publicState(match: ArenaMatch, playerId: string) {
   );
   const topicId = match.topicId || "multiply";
   const mode = resolveArenaMode(match);
+  const totalRounds = totalRoundsForMatch(match);
 
   return {
     code: match.code,
@@ -101,7 +127,7 @@ export function publicState(match: ArenaMatch, playerId: string) {
     maxPlayers: MAX_ARENA_PLAYERS,
     status: match.status,
     round: match.round + 1,
-    totalRounds: match.questionIds.length,
+    totalRounds,
     roundStartedAt: match.roundStartedAt,
     roundEndsAt: match.roundEndsAt,
     nextAt: match.nextAt,
@@ -251,6 +277,7 @@ export function settle(match: ArenaMatch, now = Date.now()): void {
   });
 
   const remainingPlayers = match.players.filter((player) => player.lives > 0);
+  const totalRounds = totalRoundsForMatch(match);
   if (remainingPlayers.length <= 1) {
     match.status = "finished";
     match.winnerId =
@@ -258,7 +285,7 @@ export function settle(match: ArenaMatch, now = Date.now()): void {
       [...match.players].sort((a, b) => b.score - a.score)[0]?.id ??
       null;
     match.nextAt = 0;
-  } else if (match.round + 1 >= match.questionIds.length) {
+  } else if (match.round + 1 >= totalRounds) {
     match.status = "finished";
     match.winnerId =
       [...remainingPlayers].sort(

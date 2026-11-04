@@ -14,11 +14,12 @@ Defines the solo 60-second fluency sprint ([`app/MathSprint.tsx`](../app/MathSpr
   - Rooms default to `'classroom'` mode (`Fair Hearts · Accuracy Safe`) and can be created with or toggled by the host in the lobby between `'classroom'` and `'showdown'`.
 
 ### FR-3.2: Round Lifecycle & Settlement (`classroom` vs `showdown`)
-- **Question Ordering**: Questions are grouped by ascending `step` and shuffled within each `step` via Fisher-Yates so matches progress from warm-up to harder challenges.
+- **Question Ordering**: Questions are grouped by ascending `step`, shuffled within each `step` via Fisher-Yates, and interleaved in 2-question passes across ascending `step` buckets so every 10-round match progresses from warm-up facts (`step 1`) to challenge problems (`step 5+`) while preserving all 200 unique questions.
 - **Round Timer**: Each round runs for `question.seconds * 1000` ms (`roundStartedAt` to `roundEndsAt`).
 - **Settlement Trigger**: A round settles when `now >= roundEndsAt` OR when all active players (`lives > 0`) have locked in an answer.
 - **Heart & Score Settlement Rules**:
   1. **`classroom` Mode (Default — Accuracy-Safe Classroom Rules)**:
+     - Match length is `CLASSROOM_MATCH_ROUNDS = 10` rounds (or fewer if `<= 1` player has hearts remaining).
      - Every active player who submits a **correct** answer within the round timer keeps their heart (`lives` unchanged) and earns `100` base accuracy points plus a speed bonus (`Math.max(0, Math.floor((roundEndsAt - answeredAt) / 200))`).
      - The **fastest** correct player (`safeId` / `safeName`) earns an additional `+50` speed-leader bonus (`150` base + speed bonus).
      - Only active players who submit an **incorrect** answer or **fail to answer before time expires** lose `1` heart (`lives = Math.max(0, lives - 1)`).
@@ -27,7 +28,7 @@ Defines the solo 60-second fluency sprint ([`app/MathSprint.tsx`](../app/MathSpr
      - All other active players lose `1` heart (`lives = Math.max(0, lives - 1)`). Other players who answered correctly still earn `40` accuracy points toward tie-breakers.
 - **Inter-Round Pause**: After settlement, if the match is not finished, `nextAt = now + 3600` ms gives players a 3.6-second intermission before the next round starts.
 - **Match Termination**:
-  - In `showdown` mode (or when players are eliminated in `classroom` mode), the match finishes (`status = "finished"`) when `<= 1` player has `lives > 0` or when all 200 rounds are exhausted.
+  - The match finishes (`status = "finished"`) when `<= 1` player has `lives > 0` or when `round + 1 >= totalRounds` (`10` in `classroom` mode, `200` in `showdown` mode).
   - When multiple players survive or tie on lives, `winnerId` is resolved by highest `lives`, then highest `score`.
 
 ### FR-3.3: Concurrency & Security

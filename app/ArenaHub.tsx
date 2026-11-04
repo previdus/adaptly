@@ -504,9 +504,9 @@ export default function ArenaHub({
                 <div className="arena-mode-toggle" role="group" aria-label="Rule mode">
                   <button
                     type="button"
-                    className={
-                      activeMode === 'classroom' ? 'arena-join' : 'arena-switch'
-                    }
+                    className={`arena-mode-btn${
+                      activeMode === 'classroom' ? ' active' : ''
+                    }`}
                     disabled={busy}
                     onClick={() => void action('mode', { mode: 'classroom' })}
                   >
@@ -514,9 +514,9 @@ export default function ArenaHub({
                   </button>
                   <button
                     type="button"
-                    className={
-                      activeMode === 'showdown' ? 'arena-join' : 'arena-switch'
-                    }
+                    className={`arena-mode-btn${
+                      activeMode === 'showdown' ? ' active' : ''
+                    }`}
                     disabled={busy}
                     onClick={() => void action('mode', { mode: 'showdown' })}
                   >

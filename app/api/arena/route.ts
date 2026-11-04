@@ -64,7 +64,7 @@ async function update(
   ) => { changed: boolean; error?: string },
 ) {
   await ready();
-  for (let retry = 0; retry < 8; retry++) {
+  for (let retry = 0; retry < 20; retry++) {
     const row = await current(code);
     if (!row) {
       return { error: "Room not found. Check the code and try again." };
