@@ -33,3 +33,5 @@
 .chooser-sprint:not(:last-child)::after{color:#bd873c;border-color:#f0e1c2}
 @media(max-width:900px){.game-chooser-grid{gap:28px}}
 @media(max-width:650px){.game-chooser-grid{gap:28px}.chooser-card:not(:last-child)::after{top:auto;right:50%;bottom:-26px;transform:translateX(50%);content:'↓'}}
+.topic-english .topic-pick-icon{background:#e8f0ff}
+.topic-english .topic-pick-copy em{color:#627fba}

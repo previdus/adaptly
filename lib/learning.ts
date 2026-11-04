@@ -1,11 +1,13 @@
-export type TopicId='multiply'|'addition'|'subtraction'|'division'|'hcf'|'lcm';
+import {grammarQuestionFor} from './grammar-bank';
+export type TopicId='multiply'|'addition'|'subtraction'|'division'|'hcf'|'lcm'|'english';
 export const topics:{id:TopicId;name:string;icon:string;sub:string;color:string}[]=[
  {id:'multiply',name:'Multiply Quest',icon:'✖️',sub:'Groups, times tables & carrying',color:'multiply'},
  {id:'addition',name:'Addition',icon:'➕',sub:'Add, regroup & solve stories',color:'addition'},
  {id:'subtraction',name:'Subtraction',icon:'➖',sub:'Take away, regroup & compare',color:'subtraction'},
  {id:'division',name:'Division',icon:'➗',sub:'Share equally & find remainders',color:'division'},
  {id:'hcf',name:'HCF',icon:'🧩',sub:'Find the greatest shared factor',color:'hcf'},
- {id:'lcm',name:'LCM',icon:'🔁',sub:'Find when multiples meet again',color:'lcm'}
+ {id:'lcm',name:'LCM',icon:'🔁',sub:'Find when multiples meet again',color:'lcm'},
+ {id:'english',name:'English Grammar',icon:'📚',sub:'Words, sentences & punctuation',color:'english'}
 ];
 export const skills=[
  {topic:'multiply' as const,name:'Equal groups',icon:'🍎',sub:'Discover what multiplication means',time:40,vid:'RNxwasijbAo',video:'https://www.khanacademy.org/math/5th-grade-foundations-engageny/5th-m4-engage-ny-foundations/5th-m4-tb-foundations/v/multiplication-intro',help:'3 groups of 4 means 4 + 4 + 4. Every group has the same number.'},
@@ -36,11 +38,19 @@ export const skills=[
  {topic:'hcf' as const,name:'HCF in a story',icon:'🎁',sub:'Make the biggest equal-size groups',time:55,help:'The HCF gives the largest number of equal groups with no leftovers.'},
  {topic:'lcm' as const,name:'Multiple explorer',icon:'🔁',sub:'Count in equal jumps',time:35,help:'List multiples of each number by skip-counting.'},
  {topic:'lcm' as const,name:'Find the first meeting point',icon:'🛤️',sub:'Spot the smallest shared multiple',time:45,help:'Compare the multiples. The smallest positive shared one is the LCM.'},
- {topic:'lcm' as const,name:'LCM in a story',icon:'🎠',sub:'Find when repeating events meet',time:55,help:'Find when both repeating patterns happen together again.'}
+ {topic:'lcm' as const,name:'LCM in a story',icon:'🎠',sub:'Find when repeating events meet',time:55,help:'Find when both repeating patterns happen together again.'},
+ {topic:'english' as const,name:'Noun Detectives',icon:'🔎',sub:'Find people, places, things and ideas',time:35,vid:'8kcJzh6gqGM',videoTitle:'Noun Song from Grammaropolis · Noun Town',videoChannel:'Grammaropolis',help:'A noun names a person, place, thing or idea. Proper nouns name a particular person or place and start with a capital letter.'},
+ {topic:'english' as const,name:'Pronoun Substitutes',icon:'🕵️',sub:'Let a little word stand in for a noun',time:35,vid:'YJDIEs4wEdQ',videoTitle:'Pronoun Song from Grammaropolis · I Got the Blues',videoChannel:'Grammaropolis',help:'A pronoun stands in for a noun: “Maya” can become “she,” and “the players” can become “they” or “them,” depending on the sentence.'},
+ {topic:'english' as const,name:'Verb Time Machine',icon:'⏰',sub:'Spot actions and travel through time',time:45,vid:'DPOm4Z-HpGY',videoTitle:'The Tenses Song · Past, Present & Future',videoChannel:'Anchor Creative Education',help:'A verb tells an action or state. Time words such as yesterday, today and tomorrow help choose past, present or future tense.'},
+ {topic:'english' as const,name:'Adjective & Adverb Studio',icon:'🎨',sub:'Describe nouns and how actions happen',time:40,vid:'5hIqdPrH--k',videoTitle:'Adjective Song from Grammaropolis · Paint the Way',videoChannel:'Grammaropolis',help:'An adjective describes a noun (“a fluffy rabbit”). An adverb often tells how an action happens (“the rabbit hopped quickly”).'},
+ {topic:'english' as const,name:'Subject–Verb Match',icon:'🤝',sub:'Help sentence subjects and verbs agree',time:40,vid:'ZqtqnNFfDXE',videoTitle:'Verbs Part 2 · Subject–Verb Agreement',videoChannel:'Mind Blooming',help:'A singular subject usually needs a singular verb (“the cat sits”). A plural subject usually needs a plural verb (“the cats sit”). Find the subject before picking the verb.'},
+ {topic:'english' as const,name:'Sentence Builder',icon:'🧱',sub:'Build complete thoughts that make sense',time:40,vid:'f7WRkG8LV2c',videoTitle:'Sentence Song · How to Write a Complete Sentence',videoChannel:'Upgradors',help:'A complete sentence shares a complete thought. It usually has a subject and a verb. A word group like “under the old tree” is only a fragment.'},
+ {topic:'english' as const,name:'Capital & Punctuation Crew',icon:'✍️',sub:'Make every sentence easy to read',time:45,vid:'hjvfcS3K7zM',videoTitle:'The Capital Letters and Full Stops Song',videoChannel:'Anchor Creative Education',help:'Begin a sentence with a capital. Capitalize names and days. Use a full stop for a statement, a question mark for a question, and an exclamation mark for a strong feeling.'},
+ {topic:'english' as const,name:'Joining Words & Prepositions',icon:'🧷',sub:'Connect ideas and show where things are',time:45,vid:'XlMxxK3hjbQ',videoTitle:'Preposition Song · A Merit Badge Is Just Like a Cat',videoChannel:'Grammaropolis',help:'Conjunctions join words or ideas (and, but, because). Prepositions help show a relationship, often where or when (under, beside, before).'}
 ];
 export const skillsForTopic=(topic:TopicId)=>skills.map((s,i)=>({s,i})).filter(x=>x.s.topic===topic).map(x=>x.i);
 export const topicInfo=(id:TopicId)=>topics.find(x=>x.id===id)!;
-export type Attempt={skill:number,level:number,correct:boolean,seconds:number,hinted:boolean,at:number,prompt:string,answer:number,given:string};
+export type Attempt={skill:number,level:number,correct:boolean,seconds:number,hinted:boolean,at:number,prompt:string,answer:number|string,given:string};
 export type Progress={stage:number,run:number};
 export type Student={id:string,name:string,attempts:Attempt[],progress?:Progress,topicProgress?:Partial<Record<TopicId,Progress>>};
 export const journey=[
@@ -77,12 +87,13 @@ export function nextConcept(progress:Progress,attempts:Attempt[],topic:TopicId='
  if(progress.stage<path.length)return path[progress.stage].skill;
  return skillsForTopic(topic).find(i=>!stats(attempts,i).mastered||attempts.filter(a=>a.skill===i&&a.level===3&&a.correct&&!a.hinted).length<3)??-1;
 }
-export type Question={skill:number,level:number,a:number,b:number,prompt:string,answer:number,explanation:string,visual?:string,topicId?:TopicId};
+export type Question={skill:number,level:number,a:number,b:number,prompt:string,answer:number|string,explanation:string,visual?:string,options?:string[],topicId?:TopicId};
 const rand=(a:number,b:number)=>Math.floor(Math.random()*(b-a+1))+a;
 export function stats(attempts:Attempt[],skill:number){const all=attempts.filter(x=>x.skill===skill);const recent=all.slice(-10);const independent=recent.filter(x=>!x.hinted);const acc=independent.length?independent.filter(x=>x.correct).length/independent.length:0;return {total:all.length,correct:all.filter(x=>x.correct).length,acc,mastered:independent.length>=8&&acc>=.8,level:(()=>{const independent=all.filter(x=>!x.hinted);const current=independent.at(-1)?.level||1;const evidence=independent.filter(x=>x.level===current).slice(-5);const wins=evidence.filter(x=>x.correct).length;return evidence.length>=5&&wins>=4?Math.min(3,current+1):evidence.length>=3&&wins<=1?Math.max(1,current-1):current})(),recent};}
 export function selectSkill(attempts:Attempt[],index:number){if(index<8)return index;const scores=skills.map((_,i)=>({i,s:stats(attempts,i)}));const gaps=scores.filter(x=>!x.s.mastered);return (gaps.length?gaps:scores).sort((a,b)=>(a.s.acc+a.s.total*.015)-(b.s.acc+b.s.total*.015))[0].i;}
 export function questionTime(q:Pick<Question,'skill'|'level'|'a'|'b'|'prompt'>){
  const topic=skills[q.skill]?.topic;
+ if(topic==='english')return Math.round(Math.max(25,Math.min(75,24+q.level*6+q.prompt.split(/\s+/).length*1.2)));
  if(topic&&topic!=='multiply'){
   const words=q.prompt.split(/\s+/).length,base=topic==='hcf'||topic==='lcm'?23+q.level*7+(String(q.a).length+String(q.b).length)*4:topic==='division'?18+q.level*8+(String(q.a).length+String(q.b).length)*5:17+q.level*9+(String(q.a).length+String(q.b).length)*5;
   return Math.round(Math.max(18,Math.min(100,base+Math.max(0,words-5)*1.3)));
@@ -99,6 +110,7 @@ export function budget(attempts:Attempt[],skill:number,level:number,question?:Qu
  return Math.round(base*(ratios.length>=3?Math.max(.8,Math.min(2,ratios[Math.floor(ratios.length/2)]*1.5)):1));
 }
 export function generate(skill:number,level:number,previous:string[]=[],step=0):Question{
+ if(skills[skill]?.topic==='english')return grammarQuestionFor(skill,level,previous,step);
  if(skill>=8)return generateArithmetic(skill,level,previous,step);
  let q:Question;let tries=0;
  do{let a=rand(level+1,level+1+Math.min(2,step)),b=rand(level+1,level+2),prompt='',explanation='',visual='';

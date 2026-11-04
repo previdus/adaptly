@@ -10,7 +10,7 @@ import "./garden.css";
 
 export const metadata: Metadata = {
   title: "Adaptly | Learning that moves with you",
-  description: "Adaptive maths learning at every child's pace. Explore multiplication, addition, subtraction, division, HCF and LCM through focused practice and playful challenges.",
+  description: "Adaptive learning for every child's pace. Explore maths and English Grammar through focused practice, playful challenges and clear progress insights.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

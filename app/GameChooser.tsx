@@ -10,12 +10,13 @@ type Props={level:number;totalLevels:number;topicId:TopicId;topicName:string;ran
 const gameNames:Record<Game,string>={level:'Level Up',sprint:'Speed Sprint',arena:'Last Star Standing'};
 
 export default function GameChooser({level,totalLevels,topicId,topicName,rank,percent,mastered,run,attempts,focusSkillIndex,onLevelUp,onSprint,onArena,onDetails}:Props){
- const [intro,setIntro]=useState<Game|null>(null),[pickGame,setPickGame]=useState<Game|null>(null),[mounted,setMounted]=useState(false);
+ const [intro,setIntro]=useState<Game|null>(null),[pickGame,setPickGame]=useState<Game|null>(null),[subjectLevel,setSubjectLevel]=useState<'subjects'|'maths-topics'>('subjects'),[mounted,setMounted]=useState(false);
+ const mathTopics=topics.filter(topic=>topic.id!=='english'),englishTopic=topics.find(topic=>topic.id==='english')!;
  const returnFocus=useRef<HTMLElement|null>(null);
  useEffect(()=>setMounted(true),[]);
  function openIntro(game:Game){returnFocus.current=document.activeElement instanceof HTMLElement?document.activeElement:null;setIntro(game)}
- function chooseGame(game:Game){setPickGame(game)}
- function chooseTopic(topic:TopicId){const game=pickGame;setPickGame(null);if(game==='level')onLevelUp(topic);else if(game==='sprint')onSprint(topic);else if(game==='arena')onArena(topic)}
+ function chooseGame(game:Game){setSubjectLevel('subjects');setPickGame(game)}
+ function chooseTopic(topic:TopicId){const game=pickGame;setPickGame(null);setSubjectLevel('subjects');if(game==='level')onLevelUp(topic);else if(game==='sprint')onSprint(topic);else if(game==='arena')onArena(topic)}
  function closeIntro(){setIntro(null);requestAnimationFrame(()=>returnFocus.current?.focus({preventScroll:true}))}
  useEffect(()=>{
   if(!intro)return;
@@ -33,7 +34,7 @@ export default function GameChooser({level,totalLevels,topicId,topicName,rank,pe
  const topicSkillIds=skillsForTopic(topicId),snapshots=topicSkillIds.map(index=>({skill:skills[index],index,...stats(attempts,index)}));
  const secureCount=snapshots.filter(x=>x.mastered).length;
  const recent=attempts.filter(x=>skills[x.skill]?.topic===topicId&&!x.hinted).slice(-10),recentAccuracy=recent.length?Math.round(recent.filter(x=>x.correct).length/recent.length*100):null;
- const sampleMap:Record<TopicId,string[]>={multiply:['3 × 4','23 × 3','27 × 3'],addition:['14 + 3','34 + 28','248 + 175'],subtraction:['74 − 32','52 − 28','500 − 276'],division:['24 ÷ 4','144 ÷ 12','29 ÷ 5'],hcf:['HCF of 12 & 18','HCF of 24 & 36','HCF of 84 & 126'],lcm:['LCM of 4 & 6','LCM of 8 & 12','LCM of 15 & 20']};
+ const sampleMap:Record<TopicId,string[]>={multiply:['3 × 4','23 × 3','27 × 3'],addition:['14 + 3','34 + 28','248 + 175'],subtraction:['74 − 32','52 − 28','500 − 276'],division:['24 ÷ 4','144 ÷ 12','29 ÷ 5'],hcf:['HCF of 12 & 18','HCF of 24 & 36','HCF of 84 & 126'],lcm:['LCM of 4 & 6','LCM of 8 & 12','LCM of 15 & 20'],english:['Find the noun','Choose the right tense','Build a complete sentence']};
  const sampleQuestions=sampleMap[topicId];
  const launch:Record<Game,()=>void>={level:()=>chooseGame('level'),sprint:()=>chooseGame('sprint'),arena:()=>chooseGame('arena')};
  const cards:[Game,string,string,string,string][]=[
@@ -42,7 +43,7 @@ export default function GameChooser({level,totalLevels,topicId,topicName,rank,pe
   ['arena','⚡','COMPETE WITH PEERS','Compete with friends','3 hearts each']
  ];
  return <section className="game-chooser" aria-labelledby="multiply-quest-title">
-  <header className="game-chooser-heading"><span className="game-chooser-kicker">✦ ADAPTLY · YOUR MATHS ARCADE ✦</span><h1 id="multiply-quest-title">Learn at your pace. Race when you’re ready.</h1><p>Pick a way to play. Choose any maths topic to get started.</p></header>
+  <header className="game-chooser-heading"><span className="game-chooser-kicker">✦ ADAPTLY · YOUR LEARNING ARCADE ✦</span><h1 id="multiply-quest-title">Learn at your pace. Race when you’re ready.</h1><p>Pick a way to play, then choose a subject to explore.</p></header>
   <div className="game-chooser-grid">
    {cards.map(([game,emoji,label,subtitle,meta])=><article key={game} className={`chooser-card chooser-${game}`}>
     <button type="button" className="chooser-play" onClick={launch[game]} aria-label={`Play ${gameNames[game]}`}>
@@ -54,13 +55,13 @@ export default function GameChooser({level,totalLevels,topicId,topicName,rank,pe
     <button type="button" className="chooser-about" onClick={()=>openIntro(game)} aria-label={`How ${gameNames[game]} helps`}><CircleHelp size={14}/><span>How it helps</span></button>
    </article>)}
   </div>
-  <button className="chooser-details" onClick={onDetails}>Grown-up guide · All maths topics <ChevronRight size={15}/></button>
+  <button className="chooser-details" onClick={onDetails}>Grown-up guide · All subjects <ChevronRight size={15}/></button>
   {mounted&&intro&&createPortal(<div className={`game-intro-backdrop intro-${intro}`} onMouseDown={e=>{if(e.target===e.currentTarget)closeIntro()}}>
    <section className="game-intro-dialog" role="dialog" aria-modal="true" aria-labelledby="game-intro-title" aria-describedby="game-intro-copy">
     <div className="game-intro-top"><div className="intro-brand"><span>{topics.find(t=>t.id===topicId)?.icon}</span> ADAPTLY · {topicName.toUpperCase()}</div><button className="intro-close" onClick={closeIntro} aria-label="Close introduction" autoFocus><X size={20}/><span>Close</span></button></div>
     <div className="game-intro-content">
      <div className="intro-main">
-      <span className="intro-eyebrow"><Sparkles size={15}/> A GAME THAT BUILDS MATHS CONFIDENCE</span>
+      <span className="intro-eyebrow"><Sparkles size={15}/> A GAME THAT BUILDS LEARNING CONFIDENCE</span>
       <div className="intro-title-row"><span className="intro-game-icon" aria-hidden="true">{intro==='level'?'🌱':intro==='sprint'?'🚀':'⚡'}</span><div><small>{intro==='level'?'YOUR PERSONAL LEARNING PATH':intro==='sprint'?'YOUR ONE-MINUTE CHALLENGE':'THE FRIENDS SHOWDOWN'}</small><h1 id="game-intro-title">{gameNames[intro]}</h1></div></div>
       <p id="game-intro-copy" className="intro-copy">{intro==='level'?'Every child starts somewhere different. The questions follow what they show they know: three confident answers open the next step; a tricky answer brings more practice on this concept.':intro==='sprint'?`A playful one-minute ${topicName.toLowerCase()} round builds quick recall. Accurate answers and streaks grow the score, and every round gives the child a personal best to chase.`:`Friends race to answer the same ${topicName.toLowerCase()} question. The quickest correct answer keeps a heart; the other active players lose one. When a player is out, they can still watch the race.`}</p>
       {intro==='level'?<div className="intro-live-stats" aria-label="Current learning progress">
@@ -87,6 +88,6 @@ export default function GameChooser({level,totalLevels,topicId,topicName,rank,pe
     </div>
    </section>
   </div>,document.body)}
-  {mounted&&pickGame&&createPortal(<div className="topic-pick-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setPickGame(null)}}><section className="topic-pick-dialog" role="dialog" aria-modal="true" aria-labelledby="topic-pick-title"><button type="button" className="topic-pick-close" onClick={()=>setPickGame(null)} aria-label="Close topic picker"><X size={19}/></button><span className="topic-pick-kicker">{pickGame==='level'?'YOUR PERSONAL LEARNING PATH':pickGame==='sprint'?'A QUICK RACE AGAINST YOU':'INVITE YOUR FRIENDS TO RACE'}</span><h2 id="topic-pick-title">Choose a maths topic</h2><p>Your questions adapt as you play. Pick what you feel like exploring.</p><div className="topic-pick-grid">{topics.map(topic=>{const indices=skillsForTopic(topic.id),count=indices.reduce((n,i)=>n+attempts.filter(a=>a.skill===i).length,0),solid=indices.filter(i=>stats(attempts,i).mastered).length;return <button key={topic.id} type="button" className={`topic-pick-card topic-${topic.color}`} onClick={()=>chooseTopic(topic.id)}><span className="topic-pick-icon">{topic.icon}</span><span className="topic-pick-copy"><strong>{topic.name}</strong><small>{topic.sub}</small><em>{count?`${count} questions · ${solid}/${indices.length} skills feeling secure`:'A fresh adventure'}</em></span><ArrowRight size={18}/></button>})}</div><button type="button" className="topic-pick-back" onClick={()=>setPickGame(null)}>Back to game choices</button></section></div>,document.body)}
+  {mounted&&pickGame&&createPortal(<div className="topic-pick-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget){setPickGame(null);setSubjectLevel('subjects')}}}><section className="topic-pick-dialog" role="dialog" aria-modal="true" aria-labelledby="topic-pick-title"><button type="button" className="topic-pick-close" onClick={()=>{setPickGame(null);setSubjectLevel('subjects')}} aria-label="Close subject picker"><X size={19}/></button><span className="topic-pick-kicker">{pickGame==='level'?'YOUR PERSONAL LEARNING PATH':pickGame==='sprint'?'A QUICK RACE AGAINST YOU':'INVITE YOUR FRIENDS TO RACE'}</span><h2 id="topic-pick-title">{subjectLevel==='subjects'?'Choose a subject':'Choose a Maths topic'}</h2><p>{subjectLevel==='subjects'?'Start with a subject. Maths topics live together in one place.':'Choose the area of Maths you want to explore.'}</p><div className="topic-pick-grid">{subjectLevel==='subjects'?<><button type="button" className="topic-pick-card topic-maths subject-family-card" onClick={()=>setSubjectLevel('maths-topics')}><span className="topic-pick-icon">🧮</span><span className="topic-pick-copy"><strong>Maths</strong><small>Multiply · Add · Subtract · Divide · HCF · LCM</small><em>{mathTopics.length} topics · choose a skill area</em></span><ArrowRight size={18}/></button><button type="button" className={`topic-pick-card topic-${englishTopic.color}`} onClick={()=>chooseTopic(englishTopic.id)}><span className="topic-pick-icon">{englishTopic.icon}</span><span className="topic-pick-copy"><strong>{englishTopic.name}</strong><small>{englishTopic.sub}</small><em>{(()=>{const indices=skillsForTopic(englishTopic.id),count=indices.reduce((n,i)=>n+attempts.filter(a=>a.skill===i).length,0);return count?`${count} questions explored`:'A fresh adventure'})()}</em></span><ArrowRight size={18}/></button></>:mathTopics.map(topic=>{const indices=skillsForTopic(topic.id),count=indices.reduce((n,i)=>n+attempts.filter(a=>a.skill===i).length,0),solid=indices.filter(i=>stats(attempts,i).mastered).length;return <button key={topic.id} type="button" className={`topic-pick-card topic-${topic.color}`} onClick={()=>chooseTopic(topic.id)}><span className="topic-pick-icon">{topic.icon}</span><span className="topic-pick-copy"><strong>{topic.name}</strong><small>{topic.sub}</small><em>{count?`${count} questions · ${solid}/${indices.length} skills feeling secure`:'A fresh adventure'}</em></span><ArrowRight size={18}/></button>})}</div><button type="button" className="topic-pick-back" onClick={()=>subjectLevel==='maths-topics'?setSubjectLevel('subjects'):setPickGame(null)}>{subjectLevel==='maths-topics'?'← All subjects':'Back to game choices'}</button></section></div>,document.body)}
  </section>
 }
