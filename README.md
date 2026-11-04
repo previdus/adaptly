@@ -1,6 +1,6 @@
 # Adaptly
 
-Adaptly is a child-friendly adaptive maths learning platform for ages 8–10. It combines a personal practice path across six topics with quick-play games and progress views for families.
+Adaptly is a child-friendly adaptive learning platform for ages 8–10. It combines a personal practice path across Maths and English Grammar topics with quick-play games and progress views for families.
 
 ## Play modes
 
@@ -14,6 +14,8 @@ Adaptly is a child-friendly adaptive maths learning platform for ages 8–10. It
 - `lib/multiply-bank.ts` contains the 200-question multiplication bank.
 - `lib/topic-bank.ts` exposes a validated 200-question bank for each topic to Speed Sprint and Last Star Standing. Fresh adaptive-practice questions are generated when needed.
 - The adaptive path generates practice questions and derives parent-facing skill evidence from saved attempts.
+
+For checkout, development, database changes, and contribution instructions, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Local development
 
@@ -48,4 +50,4 @@ The workflow uses GitHub OIDC and short-lived AWS credentials; it does not store
 
 To recreate the role in another account, create a CloudFormation stack in `us-east-1` from `infra/aws/github-actions-deploy-role.yaml`. If that account already has GitHub's OIDC provider, pass its ARN as `ExistingGitHubOidcProviderArn`; otherwise leave the parameter blank and the stack creates it. Set the new stack's `RoleArn` output as `role-to-assume` in the workflow. The AWS host must be managed by Systems Manager and have the `app=Adaptly` and `Name=adaptly-poc` tags, set by `infra/aws/adaptly-poc.yaml`.
 
-The role trusts only `previdus/adaptly`'s `main` branch and can run the deployment script only on the tagged Adaptly host. Since Systems Manager runs commands with host-level privileges, protect `main` and limit who can push to it. A push before the one-time role and variable setup shows a setup note instead of attempting AWS access.
+The role trusts only `previdus/adaptly`'s `main` branch and can run the deployment script only on the tagged Adaptly host. Since Systems Manager runs commands with host-level privileges, protect `main` and limit who can push to it. Deployment requires that role to exist and be accessible; failures appear in GitHub Actions.
