@@ -29,7 +29,7 @@ export function questionBank(topic:TopicId):readonly GameQuestion[]{
   }
  }
  if(bank.length!==200||new Set(bank.map(q=>q.id)).size!==200||new Set(bank.map(q=>q.prompt)).size!==200)throw new Error(`The ${topic} question bank needs 200 unique, valid questions.`);
- if(bank.some(q=>!Number.isSafeInteger(q.answer)||q.answer<0||q.answer!==expectedAnswer(topic,q)||!q.prompt.trim()||q.seconds<18))throw new Error(`The ${topic} question bank contains an invalid question.`);
+ if(bank.some(q=>typeof q.answer!=='number'||!Number.isSafeInteger(q.answer)||q.answer<0||q.answer!==expectedAnswer(topic,q)||!q.prompt.trim()||q.seconds<18))throw new Error(`The ${topic} question bank contains an invalid question.`);
  const frozen=Object.freeze(bank);cached.set(topic,frozen);return frozen;
 }
 
