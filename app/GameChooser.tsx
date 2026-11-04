@@ -11,15 +11,12 @@ const gameNames:Record<Game,string>={level:'Level Up',sprint:'Speed Sprint',aren
 
 export default function GameChooser({level,totalLevels,topicId,topicName,rank,percent,mastered,run,attempts,focusSkillIndex,onLevelUp,onSprint,onArena,onDetails}:Props){
  const [intro,setIntro]=useState<Game|null>(null),[pickGame,setPickGame]=useState<Game|null>(null),[mounted,setMounted]=useState(false);
- const hoverTimer=useRef<ReturnType<typeof setTimeout>|null>(null),returnFocus=useRef<HTMLElement|null>(null),suppressFocusIntro=useRef(false);
+ const returnFocus=useRef<HTMLElement|null>(null);
  useEffect(()=>setMounted(true),[]);
- function openIntro(game:Game){if(hoverTimer.current)clearTimeout(hoverTimer.current);returnFocus.current=document.activeElement instanceof HTMLElement?document.activeElement:null;setIntro(game)}
- function chooseGame(game:Game){if(hoverTimer.current)clearTimeout(hoverTimer.current);setPickGame(game)}
+ function openIntro(game:Game){returnFocus.current=document.activeElement instanceof HTMLElement?document.activeElement:null;setIntro(game)}
+ function chooseGame(game:Game){setPickGame(game)}
  function chooseTopic(topic:TopicId){const game=pickGame;setPickGame(null);if(game==='level')onLevelUp(topic);else if(game==='sprint')onSprint(topic);else if(game==='arena')onArena(topic)}
- function closeIntro(){setIntro(null);suppressFocusIntro.current=true;requestAnimationFrame(()=>{returnFocus.current?.focus({preventScroll:true});setTimeout(()=>{suppressFocusIntro.current=false},0)})}
- function hoverCard(game:Game){if(hoverTimer.current)clearTimeout(hoverTimer.current);hoverTimer.current=setTimeout(()=>openIntro(game),420)}
- function leaveCard(){if(hoverTimer.current){clearTimeout(hoverTimer.current);hoverTimer.current=null}}
- function focusIntro(e:React.FocusEvent<HTMLButtonElement>,game:Game){if(suppressFocusIntro.current){suppressFocusIntro.current=false;return}if(e.currentTarget.matches(':focus-visible'))openIntro(game)}
+ function closeIntro(){setIntro(null);requestAnimationFrame(()=>returnFocus.current?.focus({preventScroll:true}))}
  useEffect(()=>{
   if(!intro)return;
   const priorOverflow=document.body.style.overflow;document.body.style.overflow='hidden';
@@ -40,21 +37,21 @@ export default function GameChooser({level,totalLevels,topicId,topicName,rank,pe
  const sampleQuestions=sampleMap[topicId];
  const launch:Record<Game,()=>void>={level:()=>chooseGame('level'),sprint:()=>chooseGame('sprint'),arena:()=>chooseGame('arena')};
  const cards:[Game,string,string,string,string][]=[
-  ['level','🌱','ADAPTIVE · YOUR PATH','Find your level',mastered?'Mastered':`${topicName} · Level ${level} of ${totalLevels}`],
-  ['sprint','🚀','SOLO · PERSONAL BEST','Race against time','60-second challenge'],
-  ['arena','⚡','2–8 PLAYERS · LIVE','Compete with friends','3 hearts each']
+  ['level','🌱','MASTER A SKILL','Find your level',mastered?'Mastered':`${topicName} · Level ${level} of ${totalLevels}`],
+  ['sprint','🚀','BUILD SPEED & ACCURACY','Race against time','60-second challenge'],
+  ['arena','⚡','COMPETE WITH PEERS','Compete with friends','3 hearts each']
  ];
  return <section className="game-chooser" aria-labelledby="multiply-quest-title">
   <header className="game-chooser-heading"><span className="game-chooser-kicker">✦ ADAPTLY · YOUR MATHS ARCADE ✦</span><h1 id="multiply-quest-title">Learn at your pace. Race when you’re ready.</h1><p>Pick a way to play. Choose any maths topic to get started.</p></header>
   <div className="game-chooser-grid">
-   {cards.map(([game,emoji,label,subtitle,meta])=><article key={game} className={`chooser-card chooser-${game}`} onMouseEnter={()=>hoverCard(game)} onMouseLeave={leaveCard}>
-    <button type="button" className="chooser-play" onClick={launch[game]} onFocus={e=>focusIntro(e,game)} aria-label={`Play ${gameNames[game]}`}>
-     <span className="chooser-art"><span className={`chooser-hero-emoji ${game}`}>{emoji}</span>{game==='level'?<><span className="chooser-spark">✦</span><span className="chooser-multiply">×</span></>:game==='sprint'?<><span className="chooser-clock">60s</span><span className="chooser-multiply">★</span></>:<><span className="chooser-hearts">♥ ♥ ♥</span><span className="chooser-multiply">×</span></>}</span>
-     <span className="chooser-label">{label}</span><strong>{gameNames[game]}</strong><em>{subtitle}</em>
+   {cards.map(([game,emoji,label,subtitle,meta])=><article key={game} className={`chooser-card chooser-${game}`}>
+    <button type="button" className="chooser-play" onClick={launch[game]} aria-label={`Play ${gameNames[game]}`}>
+     <span className="chooser-label">{label}</span><span className="chooser-art"><span className={`chooser-hero-emoji ${game}`}>{emoji}</span>{game==='level'?<><span className="chooser-spark">✦</span><span className="chooser-multiply">×</span></>:game==='sprint'?<><span className="chooser-clock">60s</span><span className="chooser-multiply">★</span></>:<><span className="chooser-hearts">♥ ♥ ♥</span><span className="chooser-multiply">×</span></>}</span>
+     <strong>{gameNames[game]}</strong><em>{subtitle}</em>
      {game==='level'?<><span className="chooser-progress-label">{meta} <i>· {rank}</i></span><span className="chooser-track" role="progressbar" aria-label={`Progress through ${topicName}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percent)}><i style={{width:`${percent}%`}}/></span></>:<span className="chooser-short-copy">{game==='sprint'?'How many can you solve in one minute?':'Fastest correct keeps a heart.'}</span>}
      <span className="chooser-cta">{game==='level'?'Continue your journey':game==='sprint'?'Start a sprint':'Enter the arena'} <ArrowRight size={16}/></span>
     </button>
-    <button type="button" className="chooser-about" onClick={()=>openIntro(game)} onFocus={e=>focusIntro(e,game)} aria-label={`How ${gameNames[game]} helps`}><CircleHelp size={14}/><span>How it helps</span></button>
+    <button type="button" className="chooser-about" onClick={()=>openIntro(game)} aria-label={`How ${gameNames[game]} helps`}><CircleHelp size={14}/><span>How it helps</span></button>
    </article>)}
   </div>
   <button className="chooser-details" onClick={onDetails}>Grown-up guide · All maths topics <ChevronRight size={15}/></button>

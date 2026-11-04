@@ -1,5 +1,5 @@
 'use client';
-import {ArrowRight,BarChart3,Clock3,Flame,Heart,Medal,Sparkles,Users,Zap} from 'lucide-react';
+import {ArrowRight,BarChart3,Clock3,Heart,Sparkles,Zap} from 'lucide-react';
 import './adaptive-story.css';
 
 function PaceRoad(){return <div className="story-pace-art" aria-hidden="true">
@@ -30,9 +30,4 @@ export default function AdaptiveStory(){return <section className="adaptive-stor
   <article className="story-chapter chapter-focus"><span className="chapter-number">02 <i>FOCUS</i></span><CarryReport/><h3>Find the sticky step.</h3><p>If carrying is tricky in addition, more practice returns to that skill. A short lesson can help—then it’s back to trying.</p><div className="chapter-takeaway"><Zap size={15}/> Growth by concept, not guesswork</div></article>
   <article className="story-chapter chapter-grownups"><span className="chapter-number">03 <i>CLARITY</i></span><div className="story-adult-art"><div className="adult-person parent-person"><span>👩‍🏫</span><b>TEACHER</b></div><div className="adult-board"><span>THE NEXT STEP</span><div><i>✓</i><b>Concept strengths</b></div><div><i>↗</i><b>Where to focus</b></div><div><i>★</i><b>Accuracy & evidence</b></div></div><div className="adult-person family-person"><span>👨‍👧</span><b>PARENT</b></div></div><h3>Grown-ups see where to help.</h3><p>Parents and teachers get a clear view of each concept: what’s steady, what needs practice, and what to try next.</p><div className="chapter-takeaway"><Heart size={15}/> A kinder, clearer next step</div></article>
  </div>
- <footer className="story-play-bridge" aria-label="Three ways to grow with Adaptly"><div className="play-bridge-heading"><span>THREE WAYS TO GROW</span><b>Learn it. Get quicker. Play together.</b></div><ol className="story-game-path">
-  <li className="game-path-level"><span className="game-path-icon"><Medal size={20}/></span><span className="game-path-copy"><b>Level Up</b><small>Master skills at your own pace</small></span><span className="game-path-arrow" aria-hidden="true"><ArrowRight size={18}/></span></li>
-  <li className="game-path-sprint"><span className="game-path-icon"><Flame size={20}/></span><span className="game-path-copy"><b>Speed Sprint</b><small>Build speed and accuracy</small></span><span className="game-path-arrow" aria-hidden="true"><ArrowRight size={18}/></span></li>
-  <li className="game-path-arena"><span className="game-path-icon"><Users size={20}/></span><span className="game-path-copy"><b>Last Star Standing</b><small>Compete with friends. Stay sharp under pressure. Learn from peers.</small></span></li>
- </ol><p>Learn at your pace. Race when you’re ready.</p></footer>
  </section>}
