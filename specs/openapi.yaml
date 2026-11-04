@@ -1,0 +1,112 @@
+openapi: 3.1.0
+info:
+  title: Adaptly / Mastery League API
+  version: 0.2.0
+  description: >
+    HTTP API contract for live multiplayer arena matches (/api/arena) and
+    family/pilot learner progress persistence (/api/family).
+paths:
+  /api/arena:
+    get:
+      summary: Poll current multiplayer room state
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-HJ-NP-Z2-9]{5}$"
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 20
+      responses:
+        "200":
+          description: Current public room state for the requesting player
+        "400":
+          description: Missing or invalid room code or player token
+        "404":
+          description: Room not found or expired
+    post:
+      summary: Create, join, start, answer, or leave a multiplayer arena match
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [create, join, start, answer, leave]
+                name:
+                  type: string
+                  maxLength: 20
+                topicId:
+                  type: string
+                  enum: [multiply, addition, subtraction, division, hcf, lcm, english]
+                code:
+                  type: string
+                  pattern: "^[A-HJ-NP-Z2-9]{5}$"
+                token:
+                  type: string
+                value:
+                  oneOf:
+                    - type: number
+                    - type: string
+      responses:
+        "200":
+          description: Updated room state
+        "400":
+          description: Validation error
+        "403":
+          description: Cross-origin request blocked
+        "404":
+          description: Room not found
+        "409":
+          description: Room state conflict or invalid transition
+  /api/family:
+    get:
+      summary: Load active pilot or family learner state from session cookie
+      responses:
+        "200":
+          description: Saved learner state or null if unauthenticated
+    post:
+      summary: Identify pilot learner, sign up, log in, save progress, or log out
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [identify, signup, login, save, logout]
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
+                  maxLength: 40
+                password:
+                  type: string
+                  minLength: 10
+                  maxLength: 128
+                state:
+                  type: object
+      responses:
+        "200":
+          description: Authenticated or saved learner state
+        "400":
+          description: Validation failure
+        "401":
+          description: Invalid credentials or expired session
+        "403":
+          description: Cross-origin request blocked
+        "429":
+          description: Rate limit exceeded (more than 12 attempts in 15 minutes)

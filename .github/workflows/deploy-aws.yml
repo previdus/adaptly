@@ -51,6 +51,9 @@ jobs:
       - name: Check types
         run: npx tsc --noEmit
 
+      - name: Run ATDD/TDD test suite
+        run: npm test
+
       - name: Build the app
         run: npm run build
 
