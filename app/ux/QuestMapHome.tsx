@@ -26,6 +26,8 @@ type Props = {
   onDetails: () => void;
 };
 
+const WINDING_OFFSETS = ['0%', '-18%', '0%', '18%', '0%', '-16%', '14%', '0%'];
+
 export default function QuestMapHome({
   topicId,
   level,
@@ -81,12 +83,16 @@ export default function QuestMapHome({
       <div className="quest-hero-banner">
         <div className="quest-hero-copy">
           <span className="ux-lab-pill">
-            {currentTopic.icon} {currentTopic.name} · {rank} ({percent}% Mastered)
+            🌌 WORLD MAP · {currentTopic.icon} {currentTopic.name} · {rank} (
+            {percent}%)
           </span>
           <h2>
-            Constellation Stage {level} of {totalLevels}
+            Star Sector {level} of {totalLevels}
           </h2>
-          <p>{currentTopic.sub} — tap any star node or launch a live portal.</p>
+          <p>
+            Follow the winding star trail with Pip. Tap any planetary node to
+            jump straight in.
+          </p>
         </div>
         <div className="quest-hero-Portals">
           <button
@@ -95,7 +101,7 @@ export default function QuestMapHome({
             data-testid="quest-portal-levelup"
             onClick={() => onStartTopic(topicId)}
           >
-            🚀 Continue Quest (Level {level})
+            🪐 Launch Active Star (Lv.{level})
           </button>
           <button
             type="button"
@@ -103,7 +109,7 @@ export default function QuestMapHome({
             data-testid="quest-portal-sprint"
             onClick={() => onSprint(topicId)}
           >
-            ⚡ 60s Speed Sprint
+            ☄️ 60s Meteor Sprint
           </button>
           <button
             type="button"
@@ -111,79 +117,92 @@ export default function QuestMapHome({
             data-testid="quest-portal-arena"
             onClick={() => onArena(topicId)}
           >
-            🏆 Last Star Standing
+            🛸 Multiplayer Star Arena
           </button>
         </div>
       </div>
 
       <div
-        className="quest-constellation-grid"
+        className="quest-winding-trail"
         role="list"
-        aria-label={`${currentTopic.name} skill constellation`}
+        aria-label={`${currentTopic.name} winding constellation path`}
       >
         {topicSkills.map((skillIdx, stepNumber) => {
           const skill = skills[skillIdx];
           const skillStats = stats(attempts, skillIdx);
           const isCurrent = skillIdx === activeSkill;
           const isMastered = skillStats.mastered;
+          const offset = WINDING_OFFSETS[stepNumber % WINDING_OFFSETS.length];
 
           return (
             <div
               key={skillIdx}
               role="listitem"
-              className={
-                'quest-node-card ' +
-                (isCurrent ? 'is-current ' : '') +
-                (isMastered ? 'is-mastered' : '')
-              }
+              className="quest-stepping-row"
+              style={{ '--step-offset': offset } as React.CSSProperties}
               data-testid={`quest-node-${skillIdx}`}
             >
-              <div className="quest-node-top">
-                <span className="quest-node-step">
-                  Star {stepNumber + 1} · Lv.{skillStats.level}
-                </span>
-                {isCurrent && (
-                  <span className="quest-pip-badge" data-testid="quest-pip-here">
-                    🦉 Pip is here
-                  </span>
-                )}
-                {!isCurrent && isMastered && (
-                  <span className="quest-pip-badge">★ Mastered</span>
-                )}
-              </div>
-
-              <div>
-                <div className="quest-node-title">
-                  <span aria-hidden="true">{skill.icon}</span>
-                  <span>{skill.name}</span>
-                </div>
-                <p className="quest-node-sub">{skill.sub}</p>
-              </div>
-
-              <button
-                type="button"
-                className="quest-node-btn"
-                data-testid={`quest-launch-skill-${skillIdx}`}
-                onClick={() => onLaunchSkill(skillIdx)}
+              {stepNumber > 0 && (
+                <div className="quest-trail-connector" aria-hidden="true" />
+              )}
+              <div
+                className={
+                  'quest-planet-node ' +
+                  (isCurrent ? 'is-current ' : '') +
+                  (isMastered ? 'is-mastered' : '')
+                }
               >
-                {isCurrent
-                  ? `Play ${skill.name} →`
-                  : isMastered
-                    ? `Replay ${skill.name}`
-                    : `Practice ${skill.name}`}
-              </button>
+                <div className="quest-planet-orb">
+                  <span className="quest-planet-icon" aria-hidden="true">
+                    {skill.icon}
+                  </span>
+                  <span className="quest-planet-number">
+                    ★ {stepNumber + 1}
+                  </span>
+                </div>
+
+                <div className="quest-planet-info">
+                  <div className="quest-node-top">
+                    <span className="quest-node-step">
+                      ORBIT {stepNumber + 1} · TIER {skillStats.level}/3
+                    </span>
+                    {isCurrent && (
+                      <span
+                        className="quest-pip-badge"
+                        data-testid="quest-pip-here"
+                      >
+                        🧑‍🚀 Pip is docked here
+                      </span>
+                    )}
+                    {!isCurrent && isMastered && (
+                      <span className="quest-pip-badge">✨ Mastered</span>
+                    )}
+                  </div>
+                  <div className="quest-node-title">{skill.name}</div>
+                  <p className="quest-node-sub">{skill.sub}</p>
+                </div>
+
+                <button
+                  type="button"
+                  className="quest-node-btn"
+                  data-testid={`quest-launch-skill-${skillIdx}`}
+                  onClick={() => onLaunchSkill(skillIdx)}
+                >
+                  {isCurrent
+                    ? `Fly to ${skill.name} →`
+                    : isMastered
+                      ? 'Replay Orbit'
+                      : 'Explore Node'}
+                </button>
+              </div>
             </div>
           );
         })}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <button
-          type="button"
-          className="ux-lab-btn"
-          onClick={onDetails}
-        >
-          How the adaptive path works →
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <button type="button" className="ux-lab-btn" onClick={onDetails}>
+          Inspect star-chart curriculum guide →
         </button>
       </div>
     </section>

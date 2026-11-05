@@ -371,13 +371,15 @@ async function testPlaywrightMultiBrowserSubstance() {
       "   PASS [UX=B]: Constellation Quest Map 1-click subject pills & direct node launch verified.",
     );
 
-    // 4c. Variant C (?ux=c): Tactile Manipulative Lab + 2-Step Guided Rescue Hint + 3D Arcade Keypad
+    // 4c. Variant C (?ux=c): Montessori Blueprint Workbench Home + Tactile Lab + 2-Step Rescue + 3D Keypad
     await hostPage.click("[data-testid='ux-switch-c']");
-    await hostPage.waitForSelector("#multiply-quest-title", { timeout: 10000 });
-    await hostPage.click("button[aria-label='Play Level Up']");
-    await hostPage.waitForSelector(".topic-pick-dialog", { timeout: 10000 });
-    await hostPage.click(".topic-pick-dialog button:has-text('Maths')");
-    await hostPage.click(".topic-pick-dialog button:has-text('Multiply Quest')");
+    await hostPage.waitForSelector("[data-testid='tactile-workbench-home']", {
+      timeout: 10000,
+    });
+    await hostPage.waitForSelector("[data-testid='workbench-live-sandbox']", {
+      timeout: 10000,
+    });
+    await hostPage.click("[data-testid='workbench-launch-practice']");
     await hostPage.waitForSelector("[data-testid='tactile-manipulative']", {
       timeout: 10000,
     });
@@ -457,9 +459,12 @@ async function testPlaywrightMultiBrowserSubstance() {
       "   PASS [UX=C]: Tactile Manipulative, 2-Step Guided Rescue Hint & 3D Arcade Keypad verified.",
     );
 
-    // 4d. Variant D (?ux=d): Unified Studio + Live Star-Track Race Arena + Smartboard Projector Mode
+    // 4d. Variant D (?ux=d): Cyber-Arcade Stadium Home + Live Star-Track Race Arena + Projector Mode
     await hostPage.click("button[aria-label='Save and exit quiz']");
     await hostPage.click("[data-testid='ux-switch-d']");
+    await hostPage.waitForSelector("[data-testid='arcade-stage-home']", {
+      timeout: 10000,
+    });
     await hostPage.waitForSelector("[data-testid='quest-portal-arena']", {
       timeout: 10000,
     });
@@ -467,6 +472,9 @@ async function testPlaywrightMultiBrowserSubstance() {
     await hostPage.waitForSelector(".arena-entry-card", { timeout: 10000 });
 
     await guestPage.goto(`${BASE_URL}/?ux=d`, { waitUntil: "networkidle" });
+    await guestPage.waitForSelector("[data-testid='arcade-stage-home']", {
+      timeout: 15000,
+    });
     await guestPage.waitForSelector("[data-testid='quest-portal-arena']", {
       timeout: 15000,
     });

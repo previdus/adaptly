@@ -11,7 +11,7 @@ import {
 } from "../lib/ux-variants";
 
 describe("Spec 05: Pluggable A/B/C/D UX Variants & Tactile Learning Models", () => {
-  it("FR-5.1: resolves UX variants by letter or alias and exposes capability flags", () => {
+  it("FR-5.1: resolves UX variants and assigns 4 pairwise-distinct home layouts and themes", () => {
     assert.equal(UX_VARIANTS.length, 4);
     assert.equal(resolveUxVariant("a"), "a");
     assert.equal(resolveUxVariant("classic"), "a");
@@ -25,26 +25,41 @@ describe("Spec 05: Pluggable A/B/C/D UX Variants & Tactile Learning Models", () 
     assert.equal(resolveUxVariant("unknown-flag", "a"), "a");
     assert.equal(resolveUxVariant(null, "d"), "d");
 
-    assert.deepEqual(uxCapabilities("a"), {
-      useQuestMapHome: false,
-      useTactilePractice: false,
-      useStarTrackArena: false,
-    });
-    assert.deepEqual(uxCapabilities("b"), {
-      useQuestMapHome: true,
-      useTactilePractice: false,
-      useStarTrackArena: false,
-    });
-    assert.deepEqual(uxCapabilities("c"), {
-      useQuestMapHome: false,
-      useTactilePractice: true,
-      useStarTrackArena: false,
-    });
-    assert.deepEqual(uxCapabilities("d"), {
-      useQuestMapHome: true,
-      useTactilePractice: true,
-      useStarTrackArena: true,
-    });
+    const capA = uxCapabilities("a");
+    const capB = uxCapabilities("b");
+    const capC = uxCapabilities("c");
+    const capD = uxCapabilities("d");
+
+    // Every variant must have a completely distinct homeLayout and themeClass
+    const homeLayouts = new Set([
+      capA.homeLayout,
+      capB.homeLayout,
+      capC.homeLayout,
+      capD.homeLayout,
+    ]);
+    const themeClasses = new Set([
+      capA.themeClass,
+      capB.themeClass,
+      capC.themeClass,
+      capD.themeClass,
+    ]);
+    assert.equal(homeLayouts.size, 4, "All 4 variants must have distinct home layouts");
+    assert.equal(themeClasses.size, 4, "All 4 variants must have distinct full-page theme classes");
+
+    assert.equal(capA.homeLayout, "classic-cards");
+    assert.equal(capB.homeLayout, "constellation-map");
+    assert.equal(capC.homeLayout, "tactile-workbench");
+    assert.equal(capD.homeLayout, "arcade-stadium");
+
+    assert.equal(capA.useTactilePractice, false);
+    assert.equal(capB.useTactilePractice, false);
+    assert.equal(capC.useTactilePractice, true);
+    assert.equal(capD.useTactilePractice, true);
+
+    assert.equal(capA.useStarTrackArena, false);
+    assert.equal(capB.useStarTrackArena, false);
+    assert.equal(capC.useStarTrackArena, false);
+    assert.equal(capD.useStarTrackArena, true);
   });
 
   it("FR-5.2: buildGuidedHintSteps generates valid 2-step Socratic rescue steps across all 37 skills", () => {

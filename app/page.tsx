@@ -55,6 +55,8 @@ import {
 } from '../lib/ux-variants';
 import UxLabSwitcher from './ux/UxLabSwitcher';
 import QuestMapHome from './ux/QuestMapHome';
+import TactileWorkbenchHome from './ux/TactileWorkbenchHome';
+import ArcadeStageHome from './ux/ArcadeStageHome';
 
 type Family = {
   students: Student[];
@@ -624,11 +626,17 @@ export default function Page() {
     return () => clearTimeout(id);
   }, [result, view, paused, help, isMastered, leveledUp, next]);
 
+  const activeCaps = uxCapabilities(uxVariant);
+
   return (
     <div
       className={
-        'shell adaptly-shell ' + (view === 'practice' ? 'is-playing' : '')
+        'shell adaptly-shell ' +
+        activeCaps.themeClass +
+        ' ' +
+        (view === 'practice' ? 'is-playing' : '')
       }
+      data-ux-variant={uxVariant}
     >
       <div className="workspace">
         <header className="topbar">
@@ -708,19 +716,47 @@ export default function Page() {
 
           {(view === 'home' || view === 'map') && (
             <div className="topic-page">
-              <div className="topic-intro">
-                <span className="eyebrow">LEARNING THAT MOVES WITH YOU</span>
-                <h1>
-                  {student
-                    ? `Your next move, ${student.name}.`
-                    : 'Little player. Big possibilities.'}
-                </h1>
-                <p>
-                  Your answers help shape what comes next. Let’s grow a little
-                  today.
-                </p>
-              </div>
-              {uxCapabilities(uxVariant).useQuestMapHome ? (
+              {activeCaps.homeLayout === 'classic-cards' && (
+                <>
+                  <div className="topic-intro">
+                    <span className="eyebrow">LEARNING THAT MOVES WITH YOU</span>
+                    <h1>
+                      {student
+                        ? `Your next move, ${student.name}.`
+                        : 'Little player. Big possibilities.'}
+                    </h1>
+                    <p>
+                      Your answers help shape what comes next. Let’s grow a
+                      little today.
+                    </p>
+                  </div>
+                  <GameChooser
+                    level={topicLevel}
+                    totalLevels={totalStages}
+                    topicId={activeTopic}
+                    topicName={topic.name}
+                    rank={topicRank}
+                    percent={masteryPercent}
+                    mastered={isMastered}
+                    run={path.run}
+                    attempts={attempts}
+                    focusSkillIndex={currentConcept}
+                    onLevelUp={(t) => start(t)}
+                    onSprint={(t) => {
+                      setActiveTopic(t);
+                      setView('sprint');
+                    }}
+                    onArena={(t) => {
+                      setActiveTopic(t);
+                      setView('arena');
+                    }}
+                    onDetails={() => setView('details')}
+                  />
+                  <AdaptiveStory />
+                </>
+              )}
+
+              {activeCaps.homeLayout === 'constellation-map' && (
                 <QuestMapHome
                   topicId={activeTopic}
                   level={topicLevel}
@@ -742,19 +778,20 @@ export default function Page() {
                   }}
                   onDetails={() => setView('details')}
                 />
-              ) : (
-                <GameChooser
+              )}
+
+              {activeCaps.homeLayout === 'tactile-workbench' && (
+                <TactileWorkbenchHome
+                  topicId={activeTopic}
                   level={topicLevel}
                   totalLevels={totalStages}
-                  topicId={activeTopic}
-                  topicName={topic.name}
                   rank={topicRank}
                   percent={masteryPercent}
-                  mastered={isMastered}
-                  run={path.run}
-                  attempts={attempts}
                   focusSkillIndex={currentConcept}
-                  onLevelUp={(t) => start(t)}
+                  attempts={attempts}
+                  onSelectTopic={(t) => setActiveTopic(t)}
+                  onLaunchSkill={(skillIdx) => start(skillIdx)}
+                  onStartTopic={(t) => start(t)}
                   onSprint={(t) => {
                     setActiveTopic(t);
                     setView('sprint');
@@ -766,7 +803,30 @@ export default function Page() {
                   onDetails={() => setView('details')}
                 />
               )}
-              <AdaptiveStory />
+
+              {activeCaps.homeLayout === 'arcade-stadium' && (
+                <ArcadeStageHome
+                  topicId={activeTopic}
+                  level={topicLevel}
+                  totalLevels={totalStages}
+                  rank={topicRank}
+                  percent={masteryPercent}
+                  focusSkillIndex={currentConcept}
+                  attempts={attempts}
+                  onSelectTopic={(t) => setActiveTopic(t)}
+                  onLaunchSkill={(skillIdx) => start(skillIdx)}
+                  onStartTopic={(t) => start(t)}
+                  onSprint={(t) => {
+                    setActiveTopic(t);
+                    setView('sprint');
+                  }}
+                  onArena={(t) => {
+                    setActiveTopic(t);
+                    setView('arena');
+                  }}
+                  onDetails={() => setView('details')}
+                />
+              )}
             </div>
           )}
 

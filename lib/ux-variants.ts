@@ -13,31 +13,31 @@ export type UXVariantMeta = {
 export const UX_VARIANTS: readonly UXVariantMeta[] = [
   {
     id: "a",
-    shortLabel: "A · Classic",
-    name: "Baseline Cards",
-    tagline: "Current 3-card dashboard, modal pickers & standard form inputs",
+    shortLabel: "A · Classic Cards",
+    name: "Botanical 3-Card Dashboard",
+    tagline: "Warm cream theme, 3-card mode chooser & modal subject pickers",
     badge: "Control",
   },
   {
     id: "b",
-    shortLabel: "B · Quest Map",
-    name: "Constellation Trail",
-    tagline: "1-click subject pills & winding skill constellation with Pip",
-    badge: "Discovery",
+    shortLabel: "B · Cosmic Trail",
+    name: "Deep-Space Winding Constellation",
+    tagline: "Full-bleed cosmic nebula, S-curve star trail & Pip world map",
+    badge: "World Map",
   },
   {
     id: "c",
-    shortLabel: "C · Tactile Lab",
-    name: "3D Keypad & Manipulatives",
-    tagline: "Touchable arrays, column carry blocks, 2-step guided hints & arcade keypad",
-    badge: "Pedagogy",
+    shortLabel: "C · Tactile Workbench",
+    name: "Montessori Blueprint Lab",
+    tagline: "Drafting-grid studio, live home manipulative sandbox & 3D keypad",
+    badge: "Hands-On Lab",
   },
   {
     id: "d",
-    shortLabel: "D · Next-Gen Studio",
-    name: "Full Quest + Tactile + Star-Track Arena",
-    tagline: "Combines Quest Map, Tactile Lab & live Star-Track classroom race bar",
-    badge: "Recommended",
+    shortLabel: "D · Arcade Stadium",
+    name: "Cyber-Arcade Game-Show Stage",
+    tagline: "Neon esports jumbotron, instant room pin-pad & Star-Track race bar",
+    badge: "Esports Stage",
   },
 ];
 
@@ -66,18 +66,69 @@ export function resolveUxVariant(
   return VARIANT_ALIASES[cleaned] ?? fallback;
 }
 
+export type UXHomeLayout =
+  | "classic-cards"
+  | "constellation-map"
+  | "tactile-workbench"
+  | "arcade-stadium";
+
+export type UXThemeClass =
+  | "ux-theme-classic"
+  | "ux-theme-cosmos"
+  | "ux-theme-blueprint"
+  | "ux-theme-stadium";
+
 export type UXCapabilities = {
+  homeLayout: UXHomeLayout;
+  themeClass: UXThemeClass;
   useQuestMapHome: boolean;
+  useTactileWorkbenchHome: boolean;
+  useArcadeStageHome: boolean;
   useTactilePractice: boolean;
   useStarTrackArena: boolean;
 };
 
+const CAPABILITIES_BY_VARIANT: Record<UXVariantId, UXCapabilities> = {
+  a: {
+    homeLayout: "classic-cards",
+    themeClass: "ux-theme-classic",
+    useQuestMapHome: false,
+    useTactileWorkbenchHome: false,
+    useArcadeStageHome: false,
+    useTactilePractice: false,
+    useStarTrackArena: false,
+  },
+  b: {
+    homeLayout: "constellation-map",
+    themeClass: "ux-theme-cosmos",
+    useQuestMapHome: true,
+    useTactileWorkbenchHome: false,
+    useArcadeStageHome: false,
+    useTactilePractice: false,
+    useStarTrackArena: false,
+  },
+  c: {
+    homeLayout: "tactile-workbench",
+    themeClass: "ux-theme-blueprint",
+    useQuestMapHome: false,
+    useTactileWorkbenchHome: true,
+    useArcadeStageHome: false,
+    useTactilePractice: true,
+    useStarTrackArena: false,
+  },
+  d: {
+    homeLayout: "arcade-stadium",
+    themeClass: "ux-theme-stadium",
+    useQuestMapHome: false,
+    useTactileWorkbenchHome: false,
+    useArcadeStageHome: true,
+    useTactilePractice: true,
+    useStarTrackArena: true,
+  },
+};
+
 export function uxCapabilities(variant: UXVariantId): UXCapabilities {
-  return {
-    useQuestMapHome: variant === "b" || variant === "d",
-    useTactilePractice: variant === "c" || variant === "d",
-    useStarTrackArena: variant === "d",
-  };
+  return CAPABILITIES_BY_VARIANT[variant] ?? CAPABILITIES_BY_VARIANT.a;
 }
 
 export type GuidedHintStep = {
