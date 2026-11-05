@@ -243,13 +243,26 @@ async function testClassroomPilotFamilyHttp() {
   const learners = ["Lukas", "Hannah", "Emil"];
   let lastState = null;
 
-  for (const name of learners) {
-    const res = await apiPost("/api/family", {
-      action: "identify",
-      email: pilotEmail,
-      name,
-    });
-    lastState = res.state;
+  try {
+    for (const name of learners) {
+      const res = await apiPost("/api/family", {
+        action: "identify",
+        email: pilotEmail,
+        name,
+      });
+      lastState = res.state;
+    }
+  } catch (err) {
+    if (
+      (BASE_URL.includes("127.0.0.1") || BASE_URL.includes("localhost")) &&
+      String(err.message).includes("503")
+    ) {
+      console.log(
+        "   SKIP (local dev without Postgres DATABASE_URL): /api/family returned 503.",
+      );
+      return;
+    }
+    throw err;
   }
 
   assert.equal(lastState.students.length, 3);
@@ -350,12 +363,21 @@ async function testPlaywrightMultiBrowserSubstance() {
     // Launch Skill 0 directly from the constellation node (zero modals)
     await hostPage.click("[data-testid='quest-launch-skill-0']");
     await hostPage.waitForSelector("button.play-hint", { timeout: 10000 });
+    await hostPage.click("button[aria-label='Save and exit quiz']");
+    await hostPage.waitForSelector("[data-testid='quest-map-home']", {
+      timeout: 10000,
+    });
     console.log(
       "   PASS [UX=B]: Constellation Quest Map 1-click subject pills & direct node launch verified.",
     );
 
     // 4c. Variant C (?ux=c): Tactile Manipulative Lab + 2-Step Guided Rescue Hint + 3D Arcade Keypad
     await hostPage.click("[data-testid='ux-switch-c']");
+    await hostPage.waitForSelector("#multiply-quest-title", { timeout: 10000 });
+    await hostPage.click("button[aria-label='Play Level Up']");
+    await hostPage.waitForSelector(".topic-pick-dialog", { timeout: 10000 });
+    await hostPage.click(".topic-pick-dialog button:has-text('Maths')");
+    await hostPage.click(".topic-pick-dialog button:has-text('Multiply Quest')");
     await hostPage.waitForSelector("[data-testid='tactile-manipulative']", {
       timeout: 10000,
     });

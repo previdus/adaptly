@@ -317,7 +317,7 @@ export default function TactilePracticePanel({
       )}
 
       <form
-        className={'play-answer ' + (q.options ? 'has-choices' : '')}
+        className={'tactile-answer-form ' + (q.options ? 'has-choices' : '')}
         onSubmit={onSubmit}
       >
         {q.options ? (
