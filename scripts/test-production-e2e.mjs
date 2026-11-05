@@ -262,15 +262,39 @@ async function testPlaywrightMultiBrowserSubstance() {
   console.log("4. [Playwright Substance] Launching 2 concurrent Chrome contexts against", BASE_URL);
   const { chromium } = await loadPlaywright();
   const browser = await chromium.launch({ channel: "chrome", headless: true });
+  const runtimeErrors = [];
+
+  function attachErrorMonitors(page, label) {
+    page.on("pageerror", (err) => {
+      runtimeErrors.push(`[${label} pageerror] ${err.message}`);
+    });
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        const text = msg.text();
+        if (!text.includes("favicon")) {
+          runtimeErrors.push(`[${label} console.error] ${text}`);
+        }
+      }
+    });
+  }
 
   try {
     const hostContext = await browser.newContext();
     const guestContext = await browser.newContext();
     const hostPage = await hostContext.newPage();
     const guestPage = await guestContext.newPage();
+    attachErrorMonitors(hostPage, "Host");
+    attachErrorMonitors(guestPage, "Guest");
 
-    // 4a. Verify Home Arcade, Demo initialization, Parent Report & Classroom View, and Level Up + Hint
-    await hostPage.goto(BASE_URL, { waitUntil: "networkidle" });
+    // 4a. Variant A (?ux=a): Baseline Control UI, Demo initialization, Parent Report & Classroom View
+    await hostPage.goto(`${BASE_URL}/?ux=a`, { waitUntil: "networkidle" });
+    await hostPage.waitForSelector("[data-testid='ux-lab-switcher']", {
+      timeout: 15000,
+    });
+    assert.equal(
+      await hostPage.getAttribute("[data-testid='ux-switch-a']", "aria-pressed"),
+      "true",
+    );
     await hostPage.waitForSelector("#multiply-quest-title", { timeout: 15000 });
 
     // Initialize Demo family via Family account button -> Take a peek first — try the demo
@@ -292,36 +316,139 @@ async function testPlaywrightMultiBrowserSubstance() {
       timeout: 10000,
     });
     console.log(
-      "   PASS: Parent Report -> Classroom View cohort heatmap & CSV export verified.",
+      "   PASS [UX=A]: Baseline Control UI, Parent Report & Classroom View cohort heatmap verified.",
     );
 
-    // Check Level Up adaptive question + teaching hint
+    // 4b. Variant B (?ux=b): Constellation Quest Map (1-click topic pills + skill trail, zero modals)
     await hostPage.click("button[aria-label='Adaptly home']");
-    await hostPage.waitForSelector("#multiply-quest-title", { timeout: 10000 });
-    await hostPage.click("button[aria-label='Play Level Up']");
-    await hostPage.waitForSelector(".topic-pick-dialog", { timeout: 10000 });
-    await hostPage.click(".topic-pick-dialog button:has-text('Maths')");
-    await hostPage.click(".topic-pick-dialog button:has-text('Multiply Quest')");
-    await hostPage.waitForSelector("button.play-hint", { timeout: 10000 });
-    await hostPage.click("button.play-hint");
-    await hostPage.waitForSelector(".play-help", { timeout: 10000 });
-    console.log("   PASS: Level Up adaptive workspace & visual hint drawer verified.");
+    await hostPage.click("[data-testid='ux-switch-b']");
+    await hostPage.waitForSelector("[data-testid='quest-map-home']", {
+      timeout: 10000,
+    });
+    await hostPage.waitForSelector("[data-testid='quest-pip-here']", {
+      timeout: 10000,
+    });
 
-    // Navigate both HostPage and GuestPage to Last Star Standing
+    // Switch topic in 1 click without modals
+    await hostPage.click("[data-testid='quest-topic-pill-addition']");
+    assert.equal(
+      await hostPage.getAttribute(
+        "[data-testid='quest-topic-pill-addition']",
+        "aria-pressed",
+      ),
+      "true",
+    );
+    await hostPage.click("[data-testid='quest-topic-pill-multiply']");
+    assert.equal(
+      await hostPage.getAttribute(
+        "[data-testid='quest-topic-pill-multiply']",
+        "aria-pressed",
+      ),
+      "true",
+    );
+
+    // Launch Skill 0 directly from the constellation node (zero modals)
+    await hostPage.click("[data-testid='quest-launch-skill-0']");
+    await hostPage.waitForSelector("button.play-hint", { timeout: 10000 });
+    console.log(
+      "   PASS [UX=B]: Constellation Quest Map 1-click subject pills & direct node launch verified.",
+    );
+
+    // 4c. Variant C (?ux=c): Tactile Manipulative Lab + 2-Step Guided Rescue Hint + 3D Arcade Keypad
+    await hostPage.click("[data-testid='ux-switch-c']");
+    await hostPage.waitForSelector("[data-testid='tactile-manipulative']", {
+      timeout: 10000,
+    });
+    await hostPage.waitForSelector("[data-testid='tactile-keypad']", {
+      timeout: 10000,
+    });
+
+    // Interact with the array manipulative row button
+    const rowBtn = await hostPage.$("[data-testid='array-row-toggle-1']");
+    if (rowBtn) {
+      await rowBtn.click();
+      assert.equal(
+        await hostPage.getAttribute(
+          "[data-testid='array-row-toggle-1']",
+          "aria-pressed",
+        ),
+        "true",
+      );
+    }
+
+    // Open the 2-Step Guided Rescue Hint and complete both Socratic steps
+    await hostPage.click("button.play-hint");
+    await hostPage.waitForSelector("[data-testid='guided-hint-box']", {
+      timeout: 10000,
+    });
+    for (let idx = 0; idx < 3; idx++) {
+      const step1Btn = await hostPage.$(
+        `[data-testid='hint-step-1-choice-${idx}']`,
+      );
+      if (step1Btn) {
+        await step1Btn.click();
+        const step2Ready = await hostPage.$(
+          "[data-testid='hint-step-2-choice-0']",
+        );
+        if (step2Ready) break;
+      }
+    }
+    await hostPage.waitForSelector("[data-testid='hint-step-2-choice-0']", {
+      timeout: 10000,
+    });
+    for (let idx = 0; idx < 3; idx++) {
+      const step2Btn = await hostPage.$(
+        `[data-testid='hint-step-2-choice-${idx}']`,
+      );
+      if (step2Btn) {
+        await step2Btn.click();
+        const currentVal = await hostPage.inputValue(
+          "[data-testid='tactile-answer-input']",
+        );
+        if (currentVal) break;
+      }
+    }
+
+    const rescuedAnswer = await hostPage.inputValue(
+      "[data-testid='tactile-answer-input']",
+    );
+    assert.ok(
+      rescuedAnswer.length > 0,
+      "2-step guided rescue hint should populate the answer",
+    );
+
+    // Clear and re-enter the answer using the 3D Arcade Keypad digit buttons
+    await hostPage.click("[data-testid='keypad-clear']");
+    assert.equal(
+      await hostPage.inputValue("[data-testid='tactile-answer-input']"),
+      "",
+    );
+    for (const digit of rescuedAnswer.split("")) {
+      await hostPage.click(`[data-testid='keypad-digit-${digit}']`);
+    }
+    assert.equal(
+      await hostPage.inputValue("[data-testid='tactile-answer-input']"),
+      rescuedAnswer,
+    );
+    await hostPage.click("[data-testid='keypad-submit']");
+    console.log(
+      "   PASS [UX=C]: Tactile Manipulative, 2-Step Guided Rescue Hint & 3D Arcade Keypad verified.",
+    );
+
+    // 4d. Variant D (?ux=d): Unified Studio + Live Star-Track Race Arena + Smartboard Projector Mode
     await hostPage.click("button[aria-label='Save and exit quiz']");
-    await hostPage.waitForSelector("#multiply-quest-title", { timeout: 10000 });
-    await hostPage.click("button[aria-label='Play Last Star Standing']");
-    await hostPage.waitForSelector(".topic-pick-dialog", { timeout: 10000 });
-    await hostPage.click(".topic-pick-dialog button:has-text('Maths')");
-    await hostPage.click(".topic-pick-dialog button:has-text('Multiply Quest')");
+    await hostPage.click("[data-testid='ux-switch-d']");
+    await hostPage.waitForSelector("[data-testid='quest-portal-arena']", {
+      timeout: 10000,
+    });
+    await hostPage.click("[data-testid='quest-portal-arena']");
     await hostPage.waitForSelector(".arena-entry-card", { timeout: 10000 });
 
-    await guestPage.goto(BASE_URL, { waitUntil: "networkidle" });
-    await guestPage.waitForSelector("#multiply-quest-title", { timeout: 15000 });
-    await guestPage.click("button[aria-label='Play Last Star Standing']");
-    await guestPage.waitForSelector(".topic-pick-dialog", { timeout: 10000 });
-    await guestPage.click(".topic-pick-dialog button:has-text('Maths')");
-    await guestPage.click(".topic-pick-dialog button:has-text('Multiply Quest')");
+    await guestPage.goto(`${BASE_URL}/?ux=d`, { waitUntil: "networkidle" });
+    await guestPage.waitForSelector("[data-testid='quest-portal-arena']", {
+      timeout: 15000,
+    });
+    await guestPage.click("[data-testid='quest-portal-arena']");
     await guestPage.waitForSelector(".arena-entry-card", { timeout: 10000 });
 
     // Host creates a Fair Classroom room in UI
@@ -363,6 +490,33 @@ async function testPlaywrightMultiBrowserSubstance() {
     await hostPage.waitForSelector("text=LIVE ROUND 1", { timeout: 10000 });
     await guestPage.waitForSelector("text=LIVE ROUND 1", { timeout: 10000 });
 
+    // Verify Variant D Star-Track Race Bar & Smartboard Projector Mode toggle
+    await hostPage.waitForSelector("[data-testid='star-track-race']", {
+      timeout: 10000,
+    });
+    await hostPage.waitForSelector("[data-testid='star-track-racer-Clara']", {
+      timeout: 10000,
+    });
+    await hostPage.waitForSelector("[data-testid='star-track-racer-Felix']", {
+      timeout: 10000,
+    });
+    await hostPage.click("[data-testid='projector-mode-toggle']");
+    assert.equal(
+      await hostPage.getAttribute(
+        "[data-testid='projector-mode-toggle']",
+        "aria-pressed",
+      ),
+      "true",
+    );
+    await hostPage.click("[data-testid='projector-mode-toggle']");
+    assert.equal(
+      await hostPage.getAttribute(
+        "[data-testid='projector-mode-toggle']",
+        "aria-pressed",
+      ),
+      "false",
+    );
+
     // Read the live question prompt in the browser and look up its answer
     const promptText = (
       await hostPage.textContent(".arena-question-copy h2")
@@ -396,8 +550,14 @@ async function testPlaywrightMultiBrowserSubstance() {
       .trim();
     assert.equal(hostHearts, "3 / 3");
     assert.equal(guestHearts, "3 / 3");
+
+    assert.equal(
+      runtimeErrors.length,
+      0,
+      `Expected zero runtime/console errors across all 4 UX variants, found: ${runtimeErrors.join("; ")}`,
+    );
     console.log(
-      `   PASS: 2-browser live match in room ${roomCode} advanced to Round 2 with both players keeping 3/3 hearts.`,
+      `   PASS [UX=D]: Star-Track Race Bar, Smartboard Projector Mode & 2-browser Round 2 match verified with 0 console/page errors.`,
     );
   } finally {
     await browser.close();

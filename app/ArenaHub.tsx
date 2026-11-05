@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { topicLabel } from '../lib/topic-bank';
 import type { TopicId } from '../lib/learning';
+import { uxCapabilities, type UXVariantId } from '../lib/ux-variants';
+import StarTrackRaceBar from './ux/StarTrackRaceBar';
 import './arena-hub.css';
 
 type Player = {
@@ -87,6 +89,7 @@ type ArenaApiResponse = {
 type Props = {
   name?: string;
   topicId: TopicId;
+  uxVariant?: UXVariantId;
   onBack: () => void;
   onSwitchSprint: (topic: TopicId) => void;
 };
@@ -132,6 +135,7 @@ function Pip({ size = 36 }: { size?: number }) {
 export default function ArenaHub({
   name = 'Explorer',
   topicId,
+  uxVariant = 'a',
   onBack,
   onSwitchSprint,
 }: Props) {
@@ -144,6 +148,8 @@ export default function ArenaHub({
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [projectorMode, setProjectorMode] = useState(false);
+  const useStarTrack = uxCapabilities(uxVariant).useStarTrackArena;
   const [preferredMode, setPreferredMode] = useState<'classroom' | 'showdown'>(
     'classroom'
   );
@@ -749,7 +755,21 @@ export default function ArenaHub({
           )}
 
           {room.status === 'playing' && (
-            <section className="arena-live">
+            <section
+              className={
+                'arena-live ' + (projectorMode ? 'arena-projector-active' : '')
+              }
+            >
+              {useStarTrack && (
+                <StarTrackRaceBar
+                  players={room.players}
+                  round={room.round}
+                  totalRounds={room.totalRounds}
+                  roomCode={room.code}
+                  projectorMode={projectorMode}
+                  onToggleProjector={() => setProjectorMode((prev) => !prev)}
+                />
+              )}
               <div className="arena-live-heading">
                 <div>
                   <span className="arena-kicker">

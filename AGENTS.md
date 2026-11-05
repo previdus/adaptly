@@ -16,6 +16,7 @@ Specifications in `specs/` and executable tests in `tests/*.spec.ts` define the 
 - [`specs/02-question-banks-and-generators.spec.md`](specs/02-question-banks-and-generators.spec.md): 200-question validated banks per topic (Maths and English Grammar), carry/no-carry arithmetic invariants, and visual group/array rules.
 - [`specs/03-multiplayer-arena-and-sprint.spec.md`](specs/03-multiplayer-arena-and-sprint.spec.md): `Speed Sprint` (60s solo) and `Last Star Standing` (multiplayer rooms, 5-letter room codes, optimistic concurrency, and fair-play classroom rules).
 - [`specs/04-family-pilot-and-reporting.spec.md`](specs/04-family-pilot-and-reporting.spec.md): Family PBKDF2 authentication, passwordless pilot profiles, truncated JSON state recovery, and Parent/Classroom concept reports.
+- [`specs/05-pluggable-ux-variants.spec.md`](specs/05-pluggable-ux-variants.spec.md): Pluggable A/B/C/D UX variant registry (`?ux=a|b|c|d`), Constellation Quest Map, Tactile Manipulative Lab, 2-Step Guided Rescue Hints, and Live Star-Track Race Arena.
 - [`specs/openapi.yaml`](specs/openapi.yaml): OpenAPI 3.1 contract for `/api/arena` and `/api/family`.
 
 ## 2. Test-Driven Development (TDD) & Quality Gates

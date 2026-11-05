@@ -3,7 +3,9 @@
 import React, { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import { X, Pause, Play, Volume2, VolumeX, Lightbulb, Check } from 'lucide-react';
 import type { Attempt, Question, topics } from '../lib/learning';
+import { uxCapabilities, type UXVariantId } from '../lib/ux-variants';
 import Celebration from './Celebration';
+import TactilePracticePanel from './ux/TactilePracticePanel';
 
 type TopicView = (typeof topics)[number];
 
@@ -29,6 +31,7 @@ type Props = {
   sound: boolean;
   demo: boolean;
   saveStatus: string;
+  uxVariant?: UXVariantId;
   onAnswer: (value: string) => void;
   onSubmit: (e: FormEvent) => void;
   onExit: () => void;
@@ -111,6 +114,7 @@ export default function PlayArena(p: Props) {
   const [height, setHeight] = useState<number | null>(null);
   const [hintPrompt, setHintPrompt] = useState<string | null>(null);
   const hintOpen = hintPrompt === p.q.prompt;
+  const useTactile = uxCapabilities(p.uxVariant ?? 'a').useTactilePractice;
 
   useEffect(() => {
     const update = () =>
@@ -361,7 +365,7 @@ export default function PlayArena(p: Props) {
               {p.q.prompt}
             </h2>
 
-            {p.q.visual && !hintOpen && !p.result && (
+            {!useTactile && p.q.visual && !hintOpen && !p.result && (
               <div
                 className={
                   'play-picture ' +
@@ -388,7 +392,7 @@ export default function PlayArena(p: Props) {
               </div>
             )}
 
-            {p.hint && hintOpen && (
+            {!useTactile && p.hint && hintOpen && (
               <div className="play-help" role="status">
                 <Lightbulb size={18} />
                 <div>
@@ -431,6 +435,16 @@ export default function PlayArena(p: Props) {
                 <Play size={17} fill="currentColor" /> I’m ready!
               </button>
             </div>
+          ) : useTactile ? (
+            <TactilePracticePanel
+              q={p.q}
+              answer={p.answer}
+              result={p.result}
+              hintOpen={p.hint && hintOpen}
+              onAnswer={p.onAnswer}
+              onSubmit={p.onSubmit}
+              onCloseHint={() => setHintPrompt(null)}
+            />
           ) : (
             <form
               className={'play-answer ' + (p.q.options ? 'has-choices' : '')}

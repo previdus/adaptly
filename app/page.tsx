@@ -41,12 +41,20 @@ import GameChooser from './GameChooser';
 import AdaptiveStory from './AdaptiveStory';
 import './game-chooser.css';
 import './responsive-overrides.css';
+import './ux/ux-variants.css';
 import { LEVEL_UP_DURATION } from '../lib/celebrations';
 import {
   exportClassroomCsv,
   summarizeClassroom,
 } from '../lib/classroom-report';
 import { MAX_FAMILY_LEARNERS } from '../lib/state-repair';
+import {
+  resolveUxVariant,
+  uxCapabilities,
+  type UXVariantId,
+} from '../lib/ux-variants';
+import UxLabSwitcher from './ux/UxLabSwitcher';
+import QuestMapHome from './ux/QuestMapHome';
 
 type Family = {
   students: Student[];
@@ -133,6 +141,7 @@ export default function Page() {
   const [streak, setStreak] = useState(0);
   const [misses, setMisses] = useState<Record<number, number>>({});
   const [activeTopic, setActiveTopic] = useState<TopicId>('multiply');
+  const [uxVariant, setUxVariant] = useState<UXVariantId>('a');
   const [reportTab, setReportTab] = useState<'learner' | 'classroom'>('learner');
   const [classroomTopicFilter, setClassroomTopicFilter] = useState<
     TopicId | 'all'
@@ -157,9 +166,23 @@ export default function Page() {
 
   useEffect(() => {
     started.current = Date.now();
-    const roomParam = new URLSearchParams(location.search).get('room');
+    const searchParams = new URLSearchParams(location.search);
+    const roomParam = searchParams.get('room');
     if (roomParam && /^[A-HJ-NP-Z2-9]{5}$/i.test(roomParam)) {
       setTimeout(() => setView('arena'), 0);
+    }
+    const rawUx =
+      searchParams.get('ux') ||
+      (() => {
+        try {
+          return sessionStorage.getItem('adaptly-ux-variant');
+        } catch {
+          return null;
+        }
+      })();
+    if (rawUx) {
+      const resolved = resolveUxVariant(rawUx, 'a');
+      setTimeout(() => setUxVariant(resolved), 0);
     }
     fetch('/api/family')
       .then((r) => r.json() as Promise<FamilyApiResponse>)
@@ -224,6 +247,18 @@ export default function Page() {
         );
       }
     });
+  }
+
+  function changeUxVariant(next: UXVariantId) {
+    setUxVariant(next);
+    try {
+      sessionStorage.setItem('adaptly-ux-variant', next);
+      const url = new URL(location.href);
+      url.searchParams.set('ux', next);
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      // Ignore storage or URL history failures in restricted contexts
+    }
   }
 
   function tryDemo() {
@@ -653,6 +688,7 @@ export default function Page() {
         </header>
 
         <main>
+          <UxLabSwitcher variant={uxVariant} onChange={changeUxVariant} />
           {demo && (
             <div className="demo-banner">
               You’re exploring a demo. Progress lasts until you leave this page.{' '}
@@ -684,28 +720,52 @@ export default function Page() {
                   today.
                 </p>
               </div>
-              <GameChooser
-                level={topicLevel}
-                totalLevels={totalStages}
-                topicId={activeTopic}
-                topicName={topic.name}
-                rank={topicRank}
-                percent={masteryPercent}
-                mastered={isMastered}
-                run={path.run}
-                attempts={attempts}
-                focusSkillIndex={currentConcept}
-                onLevelUp={(t) => start(t)}
-                onSprint={(t) => {
-                  setActiveTopic(t);
-                  setView('sprint');
-                }}
-                onArena={(t) => {
-                  setActiveTopic(t);
-                  setView('arena');
-                }}
-                onDetails={() => setView('details')}
-              />
+              {uxCapabilities(uxVariant).useQuestMapHome ? (
+                <QuestMapHome
+                  topicId={activeTopic}
+                  level={topicLevel}
+                  totalLevels={totalStages}
+                  rank={topicRank}
+                  percent={masteryPercent}
+                  focusSkillIndex={currentConcept}
+                  attempts={attempts}
+                  onSelectTopic={(t) => setActiveTopic(t)}
+                  onLaunchSkill={(skillIdx) => start(skillIdx)}
+                  onStartTopic={(t) => start(t)}
+                  onSprint={(t) => {
+                    setActiveTopic(t);
+                    setView('sprint');
+                  }}
+                  onArena={(t) => {
+                    setActiveTopic(t);
+                    setView('arena');
+                  }}
+                  onDetails={() => setView('details')}
+                />
+              ) : (
+                <GameChooser
+                  level={topicLevel}
+                  totalLevels={totalStages}
+                  topicId={activeTopic}
+                  topicName={topic.name}
+                  rank={topicRank}
+                  percent={masteryPercent}
+                  mastered={isMastered}
+                  run={path.run}
+                  attempts={attempts}
+                  focusSkillIndex={currentConcept}
+                  onLevelUp={(t) => start(t)}
+                  onSprint={(t) => {
+                    setActiveTopic(t);
+                    setView('sprint');
+                  }}
+                  onArena={(t) => {
+                    setActiveTopic(t);
+                    setView('arena');
+                  }}
+                  onDetails={() => setView('details')}
+                />
+              )}
               <AdaptiveStory />
             </div>
           )}
@@ -805,6 +865,7 @@ export default function Page() {
             <ArenaHub
               name={student?.name || 'Explorer'}
               topicId={activeTopic}
+              uxVariant={uxVariant}
               onBack={() => setView('home')}
               onSwitchSprint={(t) => {
                 setActiveTopic(t);
@@ -845,6 +906,7 @@ export default function Page() {
               sound={sound}
               demo={demo}
               saveStatus={saveStatus}
+              uxVariant={uxVariant}
               onAnswer={setAnswer}
               onSubmit={submit}
               onExit={() => {
