@@ -46,13 +46,18 @@ describe("Spec 02: Question Banks & Procedural Generators", () => {
       }
     }
 
-    let previousVisualTotal = 0;
+    let previousMax = 0;
     for (const stage of journey.slice(0, 6)) {
-      for (let run = 0; run < 3; run++) {
-        const q = generate(stage.skill, stage.level, [], run);
-        assert.ok(Number(q.answer) >= previousVisualTotal);
-        previousVisualTotal = Number(q.answer);
+      const seen: string[] = [];
+      const totals = new Set<number>();
+      for (let i = 0; i < 24; i++) {
+        const q = generate(stage.skill, stage.level, seen);
+        totals.add(Number(q.answer));
+        seen.push(q.prompt);
       }
+      assert.ok(totals.size > 1, "Students must count different quantities");
+      assert.ok(Math.min(...totals) > previousMax);
+      previousMax = Math.max(...totals);
     }
   });
 
@@ -74,13 +79,15 @@ describe("Spec 02: Question Banks & Procedural Generators", () => {
             const expected = skill === 16 ? q.b : q.a - q.b;
             assert.equal(q.answer, expected);
           } else if (topic === "division") {
-            const expected = skill === 21 ? q.a % q.b : q.a / q.b;
+            const expected = skill === 21 ? q.a % q.b
+              : skill === 22 && level === 3 ? Math.ceil(q.a / q.b)
+              : Math.floor(q.a / q.b);
             assert.equal(q.answer, expected);
             if (skill === 21) assert.ok(Number(q.answer) >= 1 && Number(q.answer) < q.b);
           } else if (topic === "hcf") {
-            assert.equal(q.answer, gcd(q.a, q.b));
+            assert.equal(q.answer, skill === 23 ? q.b : gcd(q.a, q.b));
           } else if (topic === "lcm") {
-            assert.equal(q.answer, lcm(q.a, q.b));
+            assert.equal(q.answer, skill === 26 ? q.a * q.b : lcm(q.a, q.b));
           }
         }
       }
@@ -142,4 +149,92 @@ it("follows the Addition rubric and exhausts distinct facts before repeating", (
     previousBudget = seconds;
     assert.ok(seen.includes(generate(skill, level, seen).prompt));
   }
+});
+
+
+const expectedPracticeSizes = {
+  multiply: [24,24,24,24,24,24,14,28,28,24,48,48,38,166,200,162,200,200,56,200,200,200,200,200],
+  subtraction: [36,200,200,135,200,200,200,200,200,200,200,200,200,200,200],
+  division: [6,10,24,20,36,42,72,180,200,180,200,200,72,200,200],
+  hcf: [24,63,200,79,200,200,79,200,200],
+  lcm: [24,63,200,79,200,200,79,200,200],
+  english: [200,200,11,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200],
+} as const;
+
+function checkPracticeFact(q: ReturnType<typeof generate>) {
+  const { skill, level, a, b, answer, topicId } = q;
+  if (topicId === "english") {
+    assert.ok(q.options?.includes(String(answer)));
+    assert.equal(new Set(q.options).size, q.options?.length);
+    assert.ok(q.options && q.options.length >= 2 && q.options.length <= 4);
+    return;
+  }
+  if (topicId === "multiply") {
+    assert.equal(answer, a * b);
+    if (skill === 4) assert.ok([...String(a)].every(digit => Number(digit) * b < 10));
+    if (skill === 5) assert.ok(a % 10 * b >= 10);
+    if (skill === 6) assert.ok(a >= 10 && b >= 10);
+  }
+  if (topicId === "subtraction") {
+    assert.ok(a > b && b > 0);
+    assert.equal(answer, skill === 16 ? b : a - b);
+    if (skill === 13 && level === 1) assert.ok(a < 10);
+    if (skill === 15) assert.equal(Math.floor(a / 10) % 10, 0);
+    if (skill === 13 || skill === 14 || skill === 15) {
+      let borrow = 0;
+      let borrows = 0;
+      for (let place = 1; place <= a; place *= 10) {
+        borrow = Number(Math.floor(a / place) % 10 - borrow < Math.floor(b / place) % 10);
+        borrows += borrow;
+      }
+      assert.equal(borrows, skill - 13);
+    }
+  }
+  if (topicId === "division") {
+    assert.ok(b >= 2 && a >= b);
+    if (skill <= 20) assert.equal(a % b, 0);
+    if (skill === 21) assert.ok(a % b > 0);
+    assert.equal(answer, skill === 21 ? a % b
+      : skill === 22 && level === 3 ? Math.ceil(a / b) : Math.floor(a / b));
+  }
+  if (topicId === "hcf") {
+    assert.equal(answer, skill === 23 ? b : gcd(a, b));
+    assert.equal(a % Number(answer), 0);
+    assert.equal(b % Number(answer), 0);
+  }
+  if (topicId === "lcm") {
+    assert.equal(answer, skill === 26 ? a * b : lcm(a, b));
+    assert.equal(Number(answer) % a, 0);
+  }
+}
+
+for (const topic of Object.keys(expectedPracticeSizes) as (keyof typeof expectedPracticeSizes)[]) {
+  it(`audits the full ${topic} practice sequence against its stage pool sizes and answer rules`, () => {
+    const path = journeyFor(topic);
+    const counts = expectedPracticeSizes[topic];
+    assert.equal(path.length, counts.length);
+    for (const { skill, level, stage } of path) {
+      const seen: string[] = [];
+      for (let i = 0; i < counts[stage]; i++) {
+        const q = generate(skill, level, seen);
+        assert.ok(!seen.includes(q.prompt), `Repeated ${topic} stage ${stage + 1} after ${i} questions`);
+        checkPracticeFact(q);
+        seen.push(q.prompt);
+      }
+      assert.equal(generate(skill, level, seen).prompt, seen[0]);
+    }
+  });
+}
+
+
+it("teaches that the HCF of two numbers can be one", () => {
+  const seen: string[] = [];
+  const answers = new Set<number>();
+  for (let i = 0; i < 200; i++) {
+    const q = generate(24, 3, seen);
+    answers.add(Number(q.answer));
+    seen.push(q.prompt);
+  }
+  assert.ok(answers.has(1));
+  assert.ok(answers.size > 1);
 });

@@ -139,11 +139,15 @@ assert.ok(
 
 let visualSize = 0;
 for (const stage of journey.slice(0, 6)) {
-  for (let run = 0; run < 3; run++) {
-    const q = generate(stage.skill, stage.level, [], run);
-    assert.ok(q.answer >= visualSize, "Visual stages never drop back to smaller groups");
-    visualSize = q.answer;
+  const seen = [];
+  const totals = [];
+  for (let i = 0; i < 24; i++) {
+    const q = generate(stage.skill, stage.level, seen);
+    seen.push(q.prompt);
+    totals.push(q.answer);
   }
+  assert.ok(Math.min(...totals) > visualSize, "Visual stage bands do not overlap");
+  visualSize = Math.max(...totals);
 }
 
 console.log(

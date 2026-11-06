@@ -45,3 +45,28 @@ Defines the structural, mathematical, and grammatical invariants for the 200-que
 | 13–15 | Join or combine two amounts in a story | 3, 3, 3 | 1, 2, 3 | 74, 78, 82 |
 
 Count a carry out of the highest column and propagate incoming carries. Stage 6 introduces a new place before combining it with carrying. One carry in stage 4 comes from the ones column. Each stage uses 200 distinct unordered facts when possible. For single-digit stages, exhaust the distinct positive facts before reuse (20 without carrying, 25 with carrying). Choose unseen prompts before recycling, including across resumed sessions when history is available. Preserve existing stage positions and skill IDs. Timings are starting budgets, subject to existing personalization.
+
+## Remaining Level Up rubrics
+
+| Topic | Teaching order | What increases the difficulty |
+| --- | --- | --- |
+| Multiplication | Equal groups and arrays; facts; tens and hundreds; written products; stories | Larger fact families, more places, then regrouping and partial products. Short stories bridge one-digit and two-digit multipliers. |
+| Subtraction | Single-digit take-away; two-digit without borrowing; borrowing; borrowing through zeros; missing parts; stories | Wider numbers, longer borrowing chains, inverse reasoning, then translating take-away and comparison situations. |
+| Division | Share equally; inverse facts; larger exact quotients; remainders; stories | Larger divisors and quotients, then distinguishing exact sharing, leftovers, and the number of containers needed. |
+| HCF | Recognize a factor; find the greatest shared factor; make equal groups or cuts | Larger candidate factors and less obvious relationships, then choosing HCF from context. |
+| LCM | Generate multiples; find the first shared multiple; solve repeating-event stories | Larger intervals, common factors that defeat simply multiplying, then identifying the first simultaneous event. |
+| English Grammar | Nouns; pronouns; verbs; modifiers; agreement; sentences; punctuation; joining words | Identify a feature, apply it in a sentence, then edit or choose it in a more demanding context. Distractors must address the same task and leave one defensible answer. |
+
+Retain the existing skill IDs and stage slots. Prefer unseen questions in the current stage. Use up to 200 distinct numeric facts per stage and exhaust intentionally bounded introductory pools before repeating. Grammar variation must change a meaningful part of the sentence; punctuation or name swaps alone do not count as new grammar rules.
+
+
+### Audit criteria and stage limits
+
+- **Multiplication:** The six visual stages use strictly increasing total bands (4–6, 8–9, 12–15, 16–20, 24–25, 30–36). Each varies both quantities and objects. Fact stages use small, middle, and larger times-table ranges. Place-value stages move from tens to hundreds. Written stages increase the multiplicand width, distinguish no carries from a required ones carry, and finish with partial products and two-digit story problems.
+- **Subtraction:** Verify a positive difference. The first stage uses two positive single-digit numbers. The next stages use two-digit numbers, then require one borrow. Across-zero stages require exactly two borrows with a zero in the tens place. Missing-number and story stages progress from no borrow to two borrows.
+- **Division:** Exact division stages progress from supported sharing to inverse facts and then larger quotients. Remainder questions always have leftovers smaller than the divisor. Stories progress from exact sharing to counting full packs and finally adding a container for leftovers.
+- **HCF:** First recover a factor from a known quotient. Then use ascending number bands 4–24, 12–52, and 24–96 for greatest shared factors. Later bands exclude pairs where one divides the other and include some coprime pairs so learners encounter HCF 1. Story questions transfer the calculation to equal cuts with no waste.
+- **LCM:** First count forward in equal jumps. Then find the least positive shared multiple using the same ascending bands, with common factors so multiplying the intervals alone gives the wrong answer. Stories ask when two cycles that start together next coincide.
+- **Grammar:** Each concept defines three different tasks, such as subject, object, and possessive pronouns, or singular, plural, and intervening-phrase agreement. Sentence combinations vary the vocabulary and, where appropriate, the answer form. They provide 200 prompts per stage except for the 11 explicitly curated irregular plural forms. Sentence variants practise the same rule in different contexts.
+
+The executable audit exhausts each pool, checks arithmetic and grammar answer invariants, and verifies recycling starts with the least recently seen prompt. Narrow fact ranges intentionally stay below 200 where adding larger numbers would change the skill. Arena and Sprint retain their existing bank generators.

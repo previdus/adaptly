@@ -1,5 +1,7 @@
+import { grammarPractice } from './grammar-practice';
+import { multiplicationPractice } from './multiplication-practice';
+import { arithmeticPractice } from './arithmetic-practice';
 import { additionQuestion, additionTime } from './addition-practice';
-import { grammarQuestionFor } from './grammar-bank';
 
 export type TopicId =
   | 'multiply'
@@ -225,15 +227,15 @@ export const skills = [
     icon: '🚀',
     sub: 'Share or group in real-life puzzles',
     time: 55,
-    help: 'Look for the total and the equal group size, then divide.'
+    help: 'Divide the total by the group size or number of groups. Check whether the story asks for full groups or a place for every item.'
   },
   {
     topic: 'hcf' as const,
     name: 'Factor finder',
     icon: '🔎',
-    sub: 'Spot numbers that divide both',
+    sub: 'Find a factor using a division fact',
     time: 35,
-    help: 'List the factors of both numbers. Find the factors they share.'
+    help: 'Multiply the known quotient by the missing divisor to make the starting number.'
   },
   {
     topic: 'hcf' as const,
@@ -249,7 +251,7 @@ export const skills = [
     icon: '🎁',
     sub: 'Make the biggest equal-size groups',
     time: 55,
-    help: 'The HCF gives the largest number of equal groups with no leftovers.'
+    help: 'Find the greatest length that divides both original lengths with no waste.'
   },
   {
     topic: 'lcm' as const,
@@ -520,8 +522,7 @@ export type Question = {
   topicId?: TopicId;
 };
 
-const rand = (a: number, b: number) =>
-  Math.floor(Math.random() * (b - a + 1)) + a;
+
 
 export function stats(attempts: Attempt[], skill: number) {
   const all = attempts.filter((x) => x.skill === skill);
@@ -665,132 +666,18 @@ export function generate(
   mode: 'practice' | 'game' = 'practice'
 ): Question {
   if (skills[skill]?.topic === 'english') {
-    return grammarQuestionFor(skill, level, previous, step);
+    return grammarPractice(skill, level, previous);
   }
   if (skills[skill]?.topic === 'addition' && mode === 'practice') {
     return additionQuestion(skill, level, previous);
   }
+  if (skill >= 13 && mode === 'practice') {
+    return arithmeticPractice(skill, level, skills[skill].topic, previous);
+  }
   if (skill >= 8) {
     return generateArithmetic(skill, level, previous, step);
   }
-  let q: Question;
-  let tries = 0;
-  do {
-    let a = rand(level + 1, level + 1 + Math.min(2, step));
-    let b = rand(level + 1, level + 2);
-    let prompt = '';
-    let explanation = '';
-    let visual = '';
-
-    if (skill < 2) {
-      const base = level * 2 + (skill === 1 ? 1 : 0);
-      a = base + Math.floor(Math.min(2, step) / 2);
-      b = base + Math.ceil(Math.min(2, step) / 2);
-      if (Math.random() < 0.5) [a, b] = [b, a];
-    }
-    if (skill === 0) {
-      prompt = `${a} baskets have ${b} apples each. How many apples altogether?`;
-      visual = 'groups';
-    }
-    if (skill === 1) {
-      prompt = `${a} rows of ${b} stars. How many stars altogether?`;
-      visual = 'array';
-    }
-    if (skill === 2) {
-      a = rand(
-        level === 1 ? 2 : level === 2 ? 5 : 9,
-        level === 1 ? 4 : level === 2 ? 8 : 12
-      );
-      b = rand(
-        level === 1 ? 2 : level === 2 ? 4 : 8,
-        level === 1 ? 5 : level === 2 ? 8 : 12
-      );
-      prompt = `${a} × ${b} = ?`;
-    }
-    if (skill === 3) {
-      a =
-        rand(
-          level === 1 ? 2 : level === 2 ? 4 : 6,
-          level === 1 ? 3 : level === 2 ? 6 : 9
-        ) * (level === 3 ? 100 : 10);
-      b = rand(
-        level === 1 ? 2 : level === 2 ? 4 : 6,
-        level === 1 ? 3 : level === 2 ? 6 : 9
-      );
-      prompt = `${a} × ${b} = ?`;
-    }
-    if (skill === 4) {
-      b = rand(level === 3 ? 3 : 2, level === 3 ? 4 : 3);
-      const max = Math.floor(9 / b);
-      a = rand(1, max) * 10 + rand(1, max);
-      if (level >= 2) a += rand(1, max) * 100;
-      if (level === 3) a += rand(1, max) * 1000;
-      prompt = `${a} × ${b} = ?`;
-    }
-    if (skill === 5) {
-      b = rand(
-        level === 1 ? 2 : level === 2 ? 3 : 6,
-        level === 1 ? 4 : level === 2 ? 6 : 9
-      );
-      a =
-        rand(
-          level === 1 ? 1 : level === 2 ? 10 : 100,
-          level === 1 ? 8 : level === 2 ? 89 : 899
-        ) *
-          10 +
-        rand(Math.ceil(10 / b), 9);
-      prompt = `${a} × ${b} = ?`;
-    }
-    if (skill === 6) {
-      a = rand(
-        level === 1 ? 12 : level === 2 ? 30 : 60,
-        level === 1 ? 29 : level === 2 ? 59 : 99
-      );
-      b = rand(
-        level === 1 ? 11 : level === 2 ? 20 : 50,
-        level === 1 ? 19 : level === 2 ? 39 : 99
-      );
-      prompt = `${a} × ${b} = ?`;
-    }
-    if (skill === 7) {
-      a = rand(3, level === 1 ? 9 : 29);
-      b = rand(3, level === 3 ? 19 : 9);
-      prompt = [
-        `A space station has ${a} rooms with ${b} plants in each. How many plants?`,
-        `${a} explorers each collect ${b} moon rocks. How many moon rocks altogether?`,
-        `A baker fills ${a} boxes with ${b} cookies each. How many cookies?`
-      ][rand(0, 2)];
-    }
-
-    if (skill < 2) {
-      explanation = `${a} equal groups of ${b}: ${Array(a).fill(b).join(' + ')} = ${a * b}.`;
-    } else if (skill === 5) {
-      const ones = (a % 10) * b;
-      explanation = `Ones: ${a % 10} × ${b} = ${ones}. Write ${ones % 10}, carry ${Math.floor(ones / 10)}. Then ${Math.floor(a / 10)} × ${b} + ${Math.floor(ones / 10)} = ${Math.floor((a * b) / 10)}. Answer: ${a * b}.`;
-    } else if (skill === 6) {
-      explanation = `Split ${b} into ${Math.floor(b / 10) * 10} + ${b % 10}. The partial products are ${a * Math.floor(b / 10) * 10} and ${a * (b % 10)}. Add them: ${a * b}.`;
-    } else {
-      explanation = `${a} × ${b} = ${a * b}. ${
-        a >= 10
-          ? `Split ${a} into ${Math.floor(a / 10) * 10} + ${a % 10}: ${Math.floor(a / 10) * 10 * b} + ${(a % 10) * b} = ${a * b}.`
-          : `Think of ${a} equal groups of ${b}, or count by ${b}, ${a} times.`
-      }`;
-    }
-
-    q = {
-      skill,
-      level,
-      a,
-      b,
-      prompt,
-      answer: a * b,
-      explanation,
-      visual,
-      topicId: 'multiply'
-    };
-    tries++;
-  } while (previous.includes(q.prompt) && tries < 80);
-  return q;
+  return multiplicationPractice(skill, level, previous);
 }
 
 const gcd = (x: number, y: number): number => (y ? gcd(y, x % y) : x);

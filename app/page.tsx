@@ -333,8 +333,7 @@ export default function Page() {
         ? 1
         : stageForTopic(topic, progress.stage).level;
       const topicAttempts = as.filter((a) => skills[a.skill]?.topic === topic);
-      const previous = (topic === 'addition' ? topicAttempts : topicAttempts.slice(-100))
-        .map((x) => x.prompt);
+      const previous = topicAttempts.map((attempt) => attempt.prompt);
       setQ(generate(skill, level, previous, progress.run));
       setAnswer('');
       setResult(null);
