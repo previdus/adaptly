@@ -1,3 +1,4 @@
+import { additionQuestion, additionTime } from './addition-practice';
 import { grammarQuestionFor } from './grammar-bank';
 
 export type TopicId =
@@ -108,17 +109,17 @@ export const skills = [
   },
   {
     topic: 'addition' as const,
-    name: 'Add without regrouping',
+    name: 'Basic addition facts',
     icon: '🪙',
-    sub: 'Line up ones, tens and hundreds',
+    sub: 'Start with ones, then add tens',
     time: 30,
     help: 'Add each place-value column. Start with the ones, then tens, then hundreds.'
   },
   {
     topic: 'addition' as const,
-    name: 'Cross the ten',
+    name: 'Build place value',
     icon: '🌈',
-    sub: 'Bundle ten ones into a ten',
+    sub: 'Carry with tens, then meet hundreds',
     time: 40,
     help: 'When the ones add to ten or more, write the ones digit and carry one ten.'
   },
@@ -560,9 +561,11 @@ export function selectSkill(attempts: Attempt[], index: number) {
 }
 
 export function questionTime(
-  q: Pick<Question, 'skill' | 'level' | 'a' | 'b' | 'prompt'>
+  q: Pick<Question, 'skill' | 'level' | 'a' | 'b' | 'prompt'>,
+  mode: 'practice' | 'game' = 'practice'
 ) {
   const topic = skills[q.skill]?.topic;
+  if (topic === 'addition' && mode === 'practice') return additionTime(q.skill, q.level);
   if (topic === 'english') {
     return Math.round(
       Math.max(
@@ -658,10 +661,14 @@ export function generate(
   skill: number,
   level: number,
   previous: string[] = [],
-  step = 0
+  step = 0,
+  mode: 'practice' | 'game' = 'practice'
 ): Question {
   if (skills[skill]?.topic === 'english') {
     return grammarQuestionFor(skill, level, previous, step);
+  }
+  if (skills[skill]?.topic === 'addition' && mode === 'practice') {
+    return additionQuestion(skill, level, previous);
   }
   if (skill >= 8) {
     return generateArithmetic(skill, level, previous, step);

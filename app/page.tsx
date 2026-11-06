@@ -80,8 +80,8 @@ function conceptExample(index: number) {
     '27 × 3 = 81 · regroup 21 ones as 2 tens and 1 one',
     '24 × 12 = (24 × 10) + (24 × 2) = 288',
     '6 boxes of 8 cookies → 6 × 8 = 48',
-    '24 + 35 = 59 · add each place-value column',
-    '38 + 27 = 65 · regroup 10 ones as a ten',
+    '4 + 3 = 7, then 8 + 6 = 14, then 24 + 35 = 59',
+    '38 + 27 = 65 · carry from the ones into the tens',
     '248 + 175 = 423 · regroup ones and tens',
     '27 + □ = 63 → □ = 36',
     '28 red marbles + 37 blue = 65 marbles',
@@ -332,9 +332,8 @@ export default function Page() {
       const level = forceEasy
         ? 1
         : stageForTopic(topic, progress.stage).level;
-      const previous = as
-        .filter((a) => skills[a.skill]?.topic === topic)
-        .slice(-100)
+      const topicAttempts = as.filter((a) => skills[a.skill]?.topic === topic);
+      const previous = (topic === 'addition' ? topicAttempts : topicAttempts.slice(-100))
         .map((x) => x.prompt);
       setQ(generate(skill, level, previous, progress.run));
       setAnswer('');
@@ -655,6 +654,7 @@ export default function Page() {
             <span className="branddot">.</span>
           </button>
           <div className="top-actions">
+            <UxLabSwitcher variant={uxVariant} onChange={changeUxVariant} />
             <button
               className="parent-nav"
               aria-label="Parent report"
@@ -696,7 +696,6 @@ export default function Page() {
         </header>
 
         <main>
-          <UxLabSwitcher variant={uxVariant} onChange={changeUxVariant} />
           {demo && (
             <div className="demo-banner">
               You’re exploring a demo. Progress lasts until you leave this page.{' '}

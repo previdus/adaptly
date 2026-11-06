@@ -32,3 +32,5 @@ Adaptly separates pure educational and multiplayer domain logic from dynamic use
 
 ### FR-5.4: Live Star-Track Race Projection (`buildStarTrackStandings`)
 - `buildStarTrackStandings(players, round, totalRounds)` maps multiplayer arena players onto a `0..100` horizontal race track coordinate (`progressPct`), assigns a deterministic cosmic racer icon, and labels each racer's live energy state (`"charged"`, `"thinking"`, or `"spectating"`).
+
+The header theme icon opens the UX Lab controls on demand. Selecting a variant closes the panel.

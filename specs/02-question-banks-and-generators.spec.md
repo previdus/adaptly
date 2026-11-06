@@ -33,3 +33,15 @@ Defines the structural, mathematical, and grammatical invariants for the 200-que
 ### FR-2.3: English Grammar Option Invariants (`english`)
 - Every question in `questionBank('english')` and `grammarQuestionFor(...)` must include an `options` array of 3 to 4 distinct non-empty strings.
 - `String(q.answer)` must be present in `q.options`.
+
+## Level Up Addition rubric
+
+| Stages | Task | Digits per addend | Exact carries by stage | Seconds |
+| --- | --- | --- | --- | --- |
+| 1–3 | Basic sums | 1, 1, 2 | 0, 1, 0 | 18, 22, 30 |
+| 4–6 | Place value | 2, 2, 3 | 1, 2, 0 | 36, 42, 46 |
+| 7–9 | Three-digit regrouping | 3, 3, 3 | 1, 2, 3 | 50, 54, 58 |
+| 10–12 | Missing addend | 3, 3, 3 | 1, 2, 3 | 62, 66, 70 |
+| 13–15 | Join or combine two amounts in a story | 3, 3, 3 | 1, 2, 3 | 74, 78, 82 |
+
+Count a carry out of the highest column and propagate incoming carries. Stage 6 introduces a new place before combining it with carrying. One carry in stage 4 comes from the ones column. Each stage uses 200 distinct unordered facts when possible. For single-digit stages, exhaust the distinct positive facts before reuse (20 without carrying, 25 with carrying). Choose unseen prompts before recycling, including across resumed sessions when history is available. Preserve existing stage positions and skill IDs. Timings are starting budgets, subject to existing personalization.

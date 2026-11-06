@@ -1433,3 +1433,18 @@
     grid-column: span 3;
   }
 }
+
+#ux-lab-panel {
+  position: fixed;
+  inset: 68px 16px auto auto;
+  width: min(400px, calc(100% - 32px));
+  margin: 0;
+  box-sizing: border-box;
+  background: #fff;
+  color: #332747;
+  box-shadow: 0 12px 36px #24163d33;
+}
+
+#ux-lab-panel:not(:popover-open) {
+  display: none;
+}

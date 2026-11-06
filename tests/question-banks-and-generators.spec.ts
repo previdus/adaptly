@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { generate, journey, skills, topics } from "../lib/learning";
+import { generate, journey, journeyFor, questionTime, skills, topics } from "../lib/learning";
 import { questionBank, topicLabel } from "../lib/topic-bank";
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
@@ -70,8 +70,6 @@ describe("Spec 02: Question Banks & Procedural Generators", () => {
           if (topic === "addition") {
             const expected = skill === 11 ? q.b : q.a + q.b;
             assert.equal(q.answer, expected);
-            if (skill === 8) assert.ok((q.a % 10) + (q.b % 10) < 10);
-            if (skill === 9) assert.ok((q.a % 10) + (q.b % 10) >= 10);
           } else if (topic === "subtraction") {
             const expected = skill === 16 ? q.b : q.a - q.b;
             assert.equal(q.answer, expected);
@@ -106,4 +104,42 @@ describe("Spec 02: Question Banks & Procedural Generators", () => {
       }
     }
   });
+});
+
+it("follows the Addition rubric and exhausts distinct facts before repeating", () => {
+  const widths = [1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3];
+  const carries = [0, 1, 0, 1, 2, 0, 1, 2, 3, 1, 2, 3, 1, 2, 3];
+  let previousBudget = 0;
+  const path = journeyFor("addition");
+  assert.equal(path.length, widths.length);
+  for (const { skill, level, stage } of path) {
+    const seen: string[] = [];
+    const facts = new Set<string>();
+    const count = stage === 0 ? 20 : stage === 1 ? 25 : 200;
+    let seconds = 0;
+    for (let i = 0; i < count; i++) {
+      const q = generate(skill, level, seen, i % 3);
+      assert.equal(String(q.a).length, widths[stage]);
+      assert.equal(String(q.b).length, widths[stage]);
+      let incoming = 0;
+      let total = 0;
+      for (let place = 1; place < 10 ** widths[stage]; place *= 10) {
+        incoming = Math.floor(((Math.floor(q.a / place) % 10) +
+          (Math.floor(q.b / place) % 10) + incoming) / 10);
+        total += incoming;
+        if (stage === 3 && place === 1) assert.equal(incoming, 1);
+      }
+      assert.equal(total, carries[stage]);
+      assert.equal(q.answer, skill === 11 ? q.b : q.a + q.b);
+      assert.ok(!seen.includes(q.prompt));
+      assert.ok(!facts.has([q.a, q.b].sort().join(",")));
+      if (stage >= 12) assert.match(q.prompt, /How many/);
+      facts.add([q.a, q.b].sort().join(","));
+      seen.push(q.prompt);
+      seconds = questionTime(q);
+      assert.ok(seconds > previousBudget);
+    }
+    previousBudget = seconds;
+    assert.ok(seen.includes(generate(skill, level, seen).prompt));
+  }
 });

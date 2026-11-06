@@ -301,6 +301,7 @@ async function testPlaywrightMultiBrowserSubstance() {
 
     // 4a. Variant A (?ux=a): Baseline Control UI, Demo initialization, Parent Report & Classroom View
     await hostPage.goto(`${BASE_URL}/?ux=a`, { waitUntil: "networkidle" });
+    await hostPage.click("[data-testid='ux-lab-trigger']");
     await hostPage.waitForSelector("[data-testid='ux-lab-switcher']", {
       timeout: 15000,
     });
@@ -334,6 +335,7 @@ async function testPlaywrightMultiBrowserSubstance() {
 
     // 4b. Variant B (?ux=b): Constellation Quest Map (1-click topic pills + skill trail, zero modals)
     await hostPage.click("button[aria-label='Adaptly home']");
+    await hostPage.click("[data-testid='ux-lab-trigger']");
     await hostPage.click("[data-testid='ux-switch-b']");
     await hostPage.waitForSelector("[data-testid='quest-map-home']", {
       timeout: 10000,
@@ -372,6 +374,7 @@ async function testPlaywrightMultiBrowserSubstance() {
     );
 
     // 4c. Variant C (?ux=c): Montessori Blueprint Workbench Home + Tactile Lab + 2-Step Rescue + 3D Keypad
+    await hostPage.click("[data-testid='ux-lab-trigger']");
     await hostPage.click("[data-testid='ux-switch-c']");
     await hostPage.waitForSelector("[data-testid='tactile-workbench-home']", {
       timeout: 10000,
@@ -461,6 +464,7 @@ async function testPlaywrightMultiBrowserSubstance() {
 
     // 4d. Variant D (?ux=d): Cyber-Arcade Stadium Home + Live Star-Track Race Arena + Projector Mode
     await hostPage.click("button[aria-label='Save and exit quiz']");
+    await hostPage.click("[data-testid='ux-lab-trigger']");
     await hostPage.click("[data-testid='ux-switch-d']");
     await hostPage.waitForSelector("[data-testid='arcade-stage-home']", {
       timeout: 10000,

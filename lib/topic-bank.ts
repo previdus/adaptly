@@ -100,7 +100,7 @@ export function questionBank(topic: TopicId): readonly GameQuestion[] {
       const bucketIndex = conceptIndex * 3 + level - 1;
       const count = perBucket + (bucketIndex < remainder ? 1 : 0);
       for (let i = 0; i < count; i++) {
-        const q = generate(skill, level, seen, bucketIndex % 3);
+        const q = generate(skill, level, seen, bucketIndex % 3, 'game');
         seen.push(q.prompt);
         bank.push({
           id: `${topic}-${String(bank.length + 1).padStart(3, '0')}`,
@@ -110,7 +110,7 @@ export function questionBank(topic: TopicId): readonly GameQuestion[] {
           a: q.a,
           b: q.b,
           answer: q.answer,
-          seconds: questionTime(q),
+          seconds: questionTime(q, 'game'),
           step: bucketIndex + 1,
         });
       }
