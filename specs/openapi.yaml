@@ -47,7 +47,7 @@ paths:
                   maxLength: 20
                 topicId:
                   type: string
-                  enum: [multiply, addition, subtraction, division, hcf, lcm, english]
+                  enum: [multiply, addition, subtraction, division, hcf, lcm, english, english-nouns, english-pronouns, english-verbs, english-modifiers, english-agreement, english-sentences, english-punctuation, english-connectives]
                 mode:
                   type: string
                   enum: [classroom, showdown]

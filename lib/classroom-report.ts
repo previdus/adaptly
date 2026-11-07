@@ -1,4 +1,5 @@
 import {
+  isGrammarTopic,
   progressFromTopic,
   skills,
   skillsForTopic,
@@ -192,7 +193,7 @@ export function exportClassroomCsv(students: Student[]): string {
       const skill = skills[index];
       const skillStats = stats(student.attempts, index);
       const subject =
-        skill.topic === "english" ? "English Grammar" : "Maths";
+        isGrammarTopic(skill.topic) ? "English Grammar" : "Maths";
       const topicName = topicInfo(skill.topic).name;
       const accuracyText = skillStats.total
         ? `${Math.round(skillStats.acc * 100)}%`

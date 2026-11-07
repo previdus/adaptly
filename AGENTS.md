@@ -45,3 +45,12 @@ npm run lint
 npx tsc --noEmit
 npm run build
 ```
+
+
+## Question feature contract
+
+Every new or revised question must ship with a verified answer, a child-friendly worked explanation, and a replayable animated walkthrough with synchronized optional voice and readable captions. Provide Play/Pause, Replay, Back/Next step, voice off, and reduced-motion support. Use the shared QuestionWalkthrough player and add topic-specific worked steps in lib/question-walkthrough.ts when needed.
+
+Show feedback after correct and incorrect submissions. Level Up must allow reading time before Continue. Sprint must retain submitted-answer reviews. Arena may reveal answers and explanations only for completed rounds. Stop speech and timers when a walkthrough closes or the learner navigates away.
+
+Document the teaching rubric before generating questions. Check progressive difficulty, mathematical/grammatical correctness, unambiguous wording, meaningful variety, and unseen-first recycling. Test worked steps against actual operands, including carry/borrow chains, remainders, missing values, and grammar distractors. Browser speech availability varies; keep the complete explanation usable through captions.

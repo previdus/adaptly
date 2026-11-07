@@ -24,6 +24,8 @@ import {
   selectSkill,
   skills,
   skillsForTopic,
+  skillMatchesTopic,
+  isGrammarTopic,
   stageForTopic,
   stats,
   topicInfo,
@@ -42,7 +44,6 @@ import AdaptiveStory from './AdaptiveStory';
 import './game-chooser.css';
 import './responsive-overrides.css';
 import './ux/ux-variants.css';
-import { LEVEL_UP_DURATION } from '../lib/celebrations';
 import {
   exportClassroomCsv,
   summarizeClassroom,
@@ -332,7 +333,7 @@ export default function Page() {
       const level = forceEasy
         ? 1
         : stageForTopic(topic, progress.stage).level;
-      const topicAttempts = as.filter((a) => skills[a.skill]?.topic === topic);
+      const topicAttempts = as.filter((a) => skillMatchesTopic(a.skill, topic));
       const previous = topicAttempts.map((attempt) => attempt.prompt);
       setQ(generate(skill, level, previous, progress.run));
       setAnswer('');
@@ -488,7 +489,7 @@ export default function Page() {
             'Subject,Topic,Concept,Attempts,Correct,Independent accuracy,Status',
             ...skills.map((s, i) => {
               const t = stats(attempts, i);
-              return `${s.topic === 'english' ? 'English Grammar' : 'Maths'},${
+              return `${isGrammarTopic(s.topic) ? 'English Grammar' : 'Maths'},${
                 topicInfo(s.topic).name
               },${s.name},${t.total},${t.correct},${
                 t.total ? Math.round(t.acc * 100) + '%' : 'Not assessed'
@@ -532,7 +533,7 @@ export default function Page() {
   const totalStages = stageForTopic(activeTopic, 100000).stage + 1;
   const rawPath = progressFor(activeTopic);
   const latest = attempts
-    .filter((a) => skills[a.skill]?.topic === activeTopic)
+    .filter((a) => skillMatchesTopic(a.skill, activeTopic))
     .at(-1);
   const expected = stageForTopic(activeTopic, rawPath.stage);
   const path = {
@@ -601,28 +602,6 @@ export default function Page() {
       playTone('tick');
     }
   }, [elapsed, q, result, paused, help, sound, view, time, playTone]);
-
-  useEffect(() => {
-    if (!result?.correct || view !== 'practice' || paused || help !== null) {
-      return;
-    }
-    const reduced = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    const id = setTimeout(
-      () => next(),
-      reduced
-        ? leveledUp && !isMastered
-          ? 1600
-          : 1300
-        : isMastered
-          ? 3300
-          : leveledUp
-            ? LEVEL_UP_DURATION
-            : 2200
-    );
-    return () => clearTimeout(id);
-  }, [result, view, paused, help, isMastered, leveledUp, next]);
 
   const activeCaps = uxCapabilities(uxVariant);
 
@@ -866,11 +845,11 @@ export default function Page() {
                 </p>
               </section>
 
-              {topics.map((topicItem, index) => (
+              {topics.filter(item => item.id !== 'english').map((topicItem, index) => (
                 <Fragment key={topicItem.id}>
-                  {(index === 0 || topicItem.id === 'english') && (
+                  {(index === 0 || topicItem.id === 'english-nouns') && (
                     <h2 className="subject-coverage-heading">
-                      {topicItem.id === 'english' ? 'English Grammar' : 'Maths'}
+                      {topicItem.id === 'english-nouns' ? 'English Grammar' : 'Maths'}
                     </h2>
                   )}
                   <section className="topic-coverage">

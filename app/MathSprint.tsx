@@ -12,6 +12,8 @@ import {
   Trophy,
   Zap,
 } from 'lucide-react';
+import QuestionWalkthrough from './QuestionWalkthrough';
+import type { WalkthroughQuestion } from '../lib/question-walkthrough';
 import { questionBank, topicLabel } from '../lib/topic-bank';
 import type { TopicId } from '../lib/learning';
 import './math-sprint.css';
@@ -35,6 +37,7 @@ export default function MathSprint({ name, identity, topicId, onBack }: Props) {
   const [right, setRight] = useState(0);
   const [miss, setMiss] = useState(0);
   const [notice, setNotice] = useState('');
+  const [answerReview, setAnswerReview] = useState<Array<{prompt: string; answer: string; explanation: string; correct: boolean; question: WalkthroughQuestion}>>([]);
 
   const began = useRef(0);
   const bank = questionBank(topicId);
@@ -88,6 +91,7 @@ export default function MathSprint({ name, identity, topicId, onBack }: Props) {
       return bucket;
     });
     setSequence(ids);
+    setAnswerReview([]);
     setPhase('playing');
     setSeconds(ROUND_SECONDS);
     setScore(0);
@@ -117,6 +121,12 @@ export default function MathSprint({ name, identity, topicId, onBack }: Props) {
         ? Number(value) === question.answer
         : value.trim().toLocaleLowerCase() ===
           question.answer.toLocaleLowerCase();
+    if (question.explanation) {
+      setAnswerReview(items => [...items, {
+        prompt: question.prompt, answer: String(question.answer),
+        explanation: question.explanation!, correct, question: {...question}
+      }]);
+    }
     const remaining = seconds;
 
     if (correct) {
@@ -350,6 +360,19 @@ export default function MathSprint({ name, identity, topicId, onBack }: Props) {
         </section>
       )}
 
+      {answerReview.length > 0 && (
+        <section className="grammar-answer-review" aria-label="Answer review" style={{padding: 20, margin: '16px auto', maxWidth: 800, background: 'white', borderRadius: 18, color: '#332747'}}>
+          <h2>Learn from your answers</h2>
+          {[...answerReview].reverse().map((item, i) => (
+            <details key={answerReview.length - i} open={i === 0}>
+              <summary>{item.correct ? '✓ Correct' : 'Let’s learn'} · {item.prompt}</summary>
+              <p><b>Answer: {item.answer}</b></p>
+              <p>{item.explanation}</p>
+              <QuestionWalkthrough question={item.question}/>
+            </details>
+          ))}
+        </section>
+      )}
       {phase === 'done' && (
         <section className="sprint-result">
           <div className="sprint-result-stars">✦　✧　✦</div>

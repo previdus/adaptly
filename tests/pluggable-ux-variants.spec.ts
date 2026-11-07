@@ -1,3 +1,4 @@
+import { skillsForTopic } from "../lib/learning";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { generate, skills, topics } from "../lib/learning";
@@ -92,10 +93,10 @@ describe("Spec 05: Pluggable A/B/C/D UX Variants & Tactile Learning Models", () 
     }
   });
 
-  it("FR-5.3: buildManipulativeModel produces interactive models across all 7 topics", () => {
+  it("FR-5.3: buildManipulativeModel produces interactive models across all registered topics", () => {
     const seenKinds = new Set<string>();
     for (const topic of topics) {
-      const firstSkill = skills.findIndex((s) => s.topic === topic.id);
+      const firstSkill = skillsForTopic(topic.id)[0];
       const q = generate(firstSkill, 1, [], 0);
       const model = buildManipulativeModel(q);
       assert.ok(model.kind);

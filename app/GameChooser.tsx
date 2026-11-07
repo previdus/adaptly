@@ -20,6 +20,7 @@ import {
 import {
   skills,
   skillsForTopic,
+  isGrammarTopic,
   stats,
   topics,
   type Attempt,
@@ -70,7 +71,7 @@ export default function GameChooser({
 }: Props) {
   const [intro, setIntro] = useState<Game | null>(null);
   const [pickGame, setPickGame] = useState<Game | null>(null);
-  const [subjectLevel, setSubjectLevel] = useState<'subjects' | 'maths-topics'>(
+  const [subjectLevel, setSubjectLevel] = useState<'subjects' | 'maths-topics' | 'grammar-topics'>(
     'subjects'
   );
   const mounted = useSyncExternalStore(
@@ -79,7 +80,8 @@ export default function GameChooser({
     () => false
   );
 
-  const mathTopics = topics.filter((topic) => topic.id !== 'english');
+  const mathTopics = topics.filter((topic) => !isGrammarTopic(topic.id));
+  const grammarTopics = topics.filter((topic) => topic.id.startsWith('english-'));
   const englishTopic = topics.find((topic) => topic.id === 'english')!;
   const returnFocus = useRef<HTMLElement | null>(null);
 
@@ -206,20 +208,28 @@ export default function GameChooser({
     ? Math.round((recent.filter((x) => x.correct).length / recent.length) * 100)
     : null;
 
-  const sampleMap: Record<TopicId, string[]> = {
+  const sampleMap: Partial<Record<TopicId, string[]>> = {
     multiply: ['3 × 4', '23 × 3', '27 × 3'],
     addition: ['14 + 3', '34 + 28', '248 + 175'],
     subtraction: ['74 − 32', '52 − 28', '500 − 276'],
     division: ['24 ÷ 4', '144 ÷ 12', '29 ÷ 5'],
     hcf: ['HCF of 12 & 18', 'HCF of 24 & 36', 'HCF of 84 & 126'],
     lcm: ['LCM of 4 & 6', 'LCM of 8 & 12', 'LCM of 15 & 20'],
+    'english-nouns': ['Find the noun', 'Name a place', 'One mouse, two ___'],
+    'english-pronouns': ['Choose we or they', 'Choose us or them', 'Is it ours or theirs?'],
+    'english-verbs': ['Spot the action', 'Choose the past tense', 'Rewrite in the future tense'],
+    'english-modifiers': ['Spot the adjective', 'Describe a noun', 'Tell how an action happens'],
+    'english-agreement': ['The cat sits', 'The cats sit', 'The pile of books rests'],
+    'english-sentences': ['Find the complete thought', 'Join alternatives', 'Join two complete ideas'],
+    'english-punctuation': ['Choose an end mark', 'Fix the capitals', 'Shorten “did not”'],
+    'english-connectives': ['Show contrast', 'Tell where', 'Explain why'],
     english: [
       'Find the noun',
       'Choose the right tense',
       'Build a complete sentence',
     ],
   };
-  const sampleQuestions = sampleMap[topicId];
+  const sampleQuestions = sampleMap[topicId] ?? [topicName, 'Choose the correct answer', 'Apply the rule'];
 
   const launch: Record<Game, () => void> = {
     level: () => chooseGame('level'),
@@ -793,12 +803,12 @@ export default function GameChooser({
               <h2 id="topic-pick-title">
                 {subjectLevel === 'subjects'
                   ? 'Choose a subject'
-                  : 'Choose a Maths topic'}
+                  : subjectLevel === 'grammar-topics' ? 'Choose an English Grammar topic' : 'Choose a Maths topic'}
               </h2>
               <p>
                 {subjectLevel === 'subjects'
-                  ? 'Start with a subject. Maths topics live together in one place.'
-                  : 'Choose the area of Maths you want to explore.'}
+                  ? 'Choose a subject, then pick what you want to practise.'
+                  : 'Choose the topic you want to explore.'}
               </p>
               <div className="topic-pick-grid">
                 {subjectLevel === 'subjects' ? (
@@ -821,7 +831,7 @@ export default function GameChooser({
                     <button
                       type="button"
                       className={`topic-pick-card topic-${englishTopic.color}`}
-                      onClick={() => chooseTopic(englishTopic.id)}
+                      onClick={() => setSubjectLevel('grammar-topics')}
                     >
                       <span className="topic-pick-icon">
                         {englishTopic.icon}
@@ -829,26 +839,13 @@ export default function GameChooser({
                       <span className="topic-pick-copy">
                         <strong>{englishTopic.name}</strong>
                         <small>{englishTopic.sub}</small>
-                        <em>
-                          {(() => {
-                            const indices = skillsForTopic(englishTopic.id);
-                            const count = indices.reduce(
-                              (n, i) =>
-                                n +
-                                attempts.filter((a) => a.skill === i).length,
-                              0
-                            );
-                            return count
-                              ? `${count} questions explored`
-                              : 'A fresh adventure';
-                          })()}
-                        </em>
+                        <em>{grammarTopics.length} topics · choose a skill area</em>
                       </span>
                       <ArrowRight size={18} />
                     </button>
                   </>
                 ) : (
-                  mathTopics.map((topic) => {
+                  (subjectLevel === 'grammar-topics' ? grammarTopics : mathTopics).map((topic) => {
                     const indices = skillsForTopic(topic.id);
                     const count = indices.reduce(
                       (n, i) =>
@@ -885,12 +882,12 @@ export default function GameChooser({
                 type="button"
                 className="topic-pick-back"
                 onClick={() =>
-                  subjectLevel === 'maths-topics'
+                  subjectLevel !== 'subjects'
                     ? setSubjectLevel('subjects')
                     : setPickGame(null)
                 }
               >
-                {subjectLevel === 'maths-topics'
+                {subjectLevel !== 'subjects'
                   ? '← All subjects'
                   : 'Back to game choices'}
               </button>

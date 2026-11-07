@@ -1,7 +1,10 @@
+import { mathsExplanation } from './maths-explanation';
+import { grammarPracticePool } from './grammar-practice';
 import { MULTIPLY_QUESTION_BANK } from './multiply-bank';
 import { ENGLISH_GRAMMAR_QUESTION_BANK } from './grammar-bank';
 import {
   generate,
+  isGrammarTopic,
   questionTime,
   skills,
   skillsForTopic,
@@ -20,6 +23,7 @@ export type GameQuestion = {
   seconds: number;
   step: number;
   options?: string[];
+  explanation?: string;
 };
 
 const cached = new Map<TopicId, readonly GameQuestion[]>();
@@ -49,6 +53,7 @@ export function questionBank(topic: TopicId): readonly GameQuestion[] {
     const bank = MULTIPLY_QUESTION_BANK.map((q) => ({
       ...q,
       topicId: 'multiply' as const,
+      explanation: mathsExplanation('multiply', q),
     }));
     cached.set(topic, bank);
     return bank;
@@ -63,6 +68,7 @@ export function questionBank(topic: TopicId): readonly GameQuestion[] {
       a: 0,
       b: 0,
       answer: q.answer,
+      explanation: `The correct answer is “${q.answer}”. ${q.explanation} Read the sentence again and check how this choice fits the rule described above.`,
       seconds: q.seconds,
       step: q.step,
       options: [...q.options],
@@ -89,6 +95,34 @@ export function questionBank(topic: TopicId): readonly GameQuestion[] {
     return frozen;
   }
 
+  if (isGrammarTopic(topic)) {
+    const [skill] = skillsForTopic(topic);
+    const advanced = grammarPracticePool(skill, 3);
+    const lastCount = Math.min(66, advanced.length);
+    const firstCount = Math.ceil((200 - lastCount) / 2);
+    const counts = [firstCount, 200 - firstCount - lastCount, lastCount];
+    const bank = [1, 2, 3].flatMap(level => {
+      const pool = grammarPracticePool(skill, level);
+      const count = counts[level - 1];
+      return Array.from({ length: count }, (_, i): GameQuestion => {
+        const draft = pool[Math.floor(i * pool.length / count)];
+        return {
+          ...draft,
+          id: `${topic}-${level}-${i + 1}`,
+          topicId: topic,
+          concept: skills[skill].name,
+          a: 0,
+          b: 0,
+          step: level,
+          options: [...draft.options!],
+          seconds: questionTime({ ...draft, skill, level, a: 0, b: 0 })
+        };
+      });
+    });
+    cached.set(topic, Object.freeze(bank));
+    return bank;
+  }
+
   const indices = skillsForTopic(topic);
   const bank: GameQuestion[] = [];
   const seen: string[] = [];
@@ -110,6 +144,7 @@ export function questionBank(topic: TopicId): readonly GameQuestion[] {
           a: q.a,
           b: q.b,
           answer: q.answer,
+          explanation: mathsExplanation(topic, { ...q, skill }),
           seconds: questionTime(q, 'game'),
           step: bucketIndex + 1,
         });

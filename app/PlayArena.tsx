@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
-import { X, Pause, Play, Volume2, VolumeX, Lightbulb, Check } from 'lucide-react';
+import React, { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
+import { X, Pause, Play, Volume2, VolumeX, Lightbulb, Check, Maximize, Minimize } from 'lucide-react';
 import type { Attempt, Question, topics } from '../lib/learning';
 import { uxCapabilities, type UXVariantId } from '../lib/ux-variants';
-import Celebration from './Celebration';
+import QuestionWalkthrough from './QuestionWalkthrough';
+import './focused-play.css';
 import TactilePracticePanel from './ux/TactilePracticePanel';
 
 type TopicView = (typeof topics)[number];
@@ -111,6 +112,23 @@ function Buddy() {
 }
 
 export default function PlayArena(p: Props) {
+  const root = useRef<HTMLElement>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [screenMessage, setScreenMessage] = useState('');
+  useEffect(() => {
+    const sync = () => setFullscreen(document.fullscreenElement === root.current);
+    document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, []);
+  async function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await root.current?.requestFullscreen();
+      setScreenMessage('');
+    } catch {
+      setScreenMessage('Fullscreen is unavailable here. Try opening Adaptly in your browser.');
+    }
+  }
   const [height, setHeight] = useState<number | null>(null);
   const [hintPrompt, setHintPrompt] = useState<string | null>(null);
   const hintOpen = hintPrompt === p.q.prompt;
@@ -141,7 +159,8 @@ export default function PlayArena(p: Props) {
 
   return (
     <section
-      className={`play-viewport clock-${urgency} ${
+      ref={root}
+      className={`play-viewport focused-play ${p.result ? "reviewing-answer" : ""} clock-${urgency} ${
         p.q.visual ? 'with-picture' : 'without-picture'
       }`}
       style={
@@ -186,7 +205,11 @@ export default function PlayArena(p: Props) {
           </span>
           <h1>{p.topic.name}</h1>
         </div>
+
         <div className="play-controls">
+          <button className="play-round-button" type="button" onClick={() => void toggleFullscreen()} aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'} title={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}>
+            {fullscreen ? <Minimize size={18}/> : <Maximize size={18}/>}
+          </button>
           <button
             className="play-round-button"
             aria-label={p.sound ? 'Mute sound' : 'Enable sound'}
@@ -205,46 +228,18 @@ export default function PlayArena(p: Props) {
         </div>
       </header>
 
-      <section className="play-map" aria-label="Your level and finish line">
-        <div className="map-number">
-          <span>LEVEL</span>
-          <b>{p.level}</b>
-        </div>
-        <div className="map-center">
-          <div className="map-caption">
-            <strong>Your growing path · {p.rank}</strong>
-            <span>
-              {p.level} <small>of</small> {p.totalLevels}
-            </span>
-          </div>
-          <div className="map-route">
-            <span style={{ width: p.percent + '%' }} />
-            <span
-              className="map-rocket"
-              style={{ left: Math.min(95, p.percent) + '%' }}
-            >
-              🌱
-            </span>
-          </div>
-        </div>
-        <div className="map-trophy">
-          <span>🏆</span>
-          <b>Mastered</b>
-        </div>
-      </section>
-
+      {screenMessage && <p className="fullscreen-message" role="status">{screenMessage}</p>}
       <div className="play-body">
-        <div
-          className="vertical-clock clock-left"
-          role="progressbar"
-          aria-label="Thinking time elapsed"
-          aria-valuemin={0}
-          aria-valuemax={p.time}
-          aria-valuenow={Math.min(p.time, Math.round(p.elapsed))}
-        >
-          <span style={{ height: used * 100 + '%' }} />
+        <div className="answer-trail-rail" role="progressbar"
+          aria-label="Correct answers toward the next level" aria-valuemin={0} aria-valuemax={3} aria-valuenow={wins}
+          aria-valuetext={`${wins} of 3 consecutive correct answers`}>
+          <span className="trail-rail-goal" aria-hidden="true">{wins === 3 ? '🎉' : '🏆'}</span>
+          <div className="trail-rail-steps" aria-hidden="true">
+            {[0, 1, 2].map(i => <span key={i} className={'trail-rail-step ' + (i < wins ? 'is-earned' : i === wins ? 'is-next' : '')}><b>{i < wins ? '★' : i + 1}</b></span>)}
+          </div>
         </div>
-        <div className="vertical-clock clock-right" aria-hidden="true">
+        <div className="vertical-clock clock-right" role="progressbar" aria-label="Question time elapsed"
+          aria-valuemin={0} aria-valuemax={p.time} aria-valuenow={Math.min(p.time, Math.round(p.elapsed))}>
           <span style={{ height: used * 100 + '%' }} />
         </div>
 
@@ -259,6 +254,16 @@ export default function PlayArena(p: Props) {
           }
           aria-label="Question and answer"
         >
+          <div className="question-level-track" role="progressbar"
+            aria-label={`Level ${p.level} of ${p.totalLevels}`}
+            aria-valuemin={1} aria-valuemax={p.totalLevels} aria-valuenow={p.level}>
+            <span className="question-track-start">Level 1</span>
+            <div className="question-track-rail" style={{'--level-position': `${Math.min(100, Math.max(0, (p.level - 1) / Math.max(1, p.totalLevels - 1) * 100))}%`} as CSSProperties}>
+              <span className="question-track-fill"/>
+              <span className="question-track-marker" aria-hidden="true"><span>🚀</span><b>{p.level}</b></span>
+            </div>
+            <span className="question-track-finish">🏆<small>Level {p.totalLevels}</small></span>
+          </div>
           <div className="card-topline">
             <div className="buddy-chat">
               <Buddy />
@@ -290,49 +295,6 @@ export default function PlayArena(p: Props) {
                     : 'seconds'}
               </small>
             </div>
-          </div>
-
-          <div
-            className="level-arch"
-            data-run={wins}
-            role="progressbar"
-            aria-label={`${wins} of 3 steps to level ${Math.min(
-              p.totalLevels,
-              p.level + 1
-            )}`}
-            aria-valuemin={0}
-            aria-valuemax={3}
-            aria-valuenow={wins}
-          >
-            <span className="arch-base">{p.level}</span>
-            {[0, 1, 2].map((i) => (
-              <React.Fragment key={i}>
-                <i
-                  className={
-                    'arch-node ' +
-                    (i < wins
-                      ? 'arch-done'
-                      : i === wins
-                        ? 'arch-current'
-                        : 'arch-future')
-                  }
-                >
-                  {i < wins ? '✓' : i === wins ? '★' : '·'}
-                </i>
-                <b
-                  className={
-                    'arch-connector ' + (i < wins ? 'arch-filled' : '')
-                  }
-                />
-              </React.Fragment>
-            ))}
-            <span className="arch-goal">
-              {Math.min(p.totalLevels, p.level + 1)}
-            </span>
-            <strong className="arch-count">
-              {wins}
-              <small>/3</small>
-            </strong>
           </div>
 
           <div className="play-question-content">
@@ -412,18 +374,20 @@ export default function PlayArena(p: Props) {
               </div>
             )}
 
-            {p.result && !p.result.correct && (
+            {p.result && (
               <div className="play-try-again" role="status">
-                <strong>Oops! Let’s learn a new trick.</strong>
-                <p>{p.q.explanation}</p>
+                <strong>{p.result.correct ? "Correct! Here’s why." : "Let’s work it out."}</strong>
+                <p><b>Answer: {p.q.answer}</b></p>
+                {p.levelUp && <p>⭐ Level complete! Read the solution, then continue to your next challenge.</p>}
+                <QuestionWalkthrough question={p.q} initiallyOpen/>
               </div>
             )}
           </div>
 
-          {p.result && !p.result.correct ? (
+          {p.result ? (
             <div className="play-retry-action">
               <button onClick={p.onNext}>
-                Let’s try another <span>→</span>
+                Continue <span>→</span>
               </button>
             </div>
           ) : p.paused ? (
@@ -538,89 +502,9 @@ export default function PlayArena(p: Props) {
         </article>
       </div>
 
-      <footer
-        className="reward-dock"
-        aria-label={`${wins} of three independent answers toward the next level`}
-      >
-        <div className="reward-message">
-          <strong>
-            {p.levelUp
-              ? 'New level unlocked!'
-              : p.run === 2
-                ? 'One more star!'
-                : p.run === 1
-                  ? 'Two stars to go!'
-                  : 'Next level trail'}
-          </strong>
-          <span>
-            {p.levelUp
-              ? 'Adventure, here we come!'
-              : p.level >= p.totalLevels
-                ? 'Reach Mastered'
-                : `Level ${p.level} → ${p.level + 1}`}
-          </span>
-        </div>
-        <div className="reward-collection" aria-label={`${wins} of 3 stars`}>
-          <strong className="streak-count">
-            {wins}
-            <i>/3</i>
-          </strong>
-          <div className="streak-path">
-            {[0, 1, 2].map((i) => (
-              <React.Fragment key={i}>
-                <span
-                  className={
-                    'trail-star ' +
-                    (i < wins
-                      ? 'trail-star-done'
-                      : i === wins
-                        ? 'trail-star-next'
-                        : 'trail-star-wait')
-                  }
-                  aria-label={
-                    i < wins
-                      ? `step ${i + 1} complete`
-                      : i === wins
-                        ? `step ${i + 1} next`
-                        : `step ${i + 1} ahead`
-                  }
-                >
-                  {i < wins ? '★' : i === wins ? '✦' : '☆'}
-                </span>
-                {i < 2 && (
-                  <i
-                    className={
-                      'trail-link ' + (i < wins ? 'trail-link-done' : '')
-                    }
-                  />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-          <span className={'reward-chest ' + (wins === 3 ? 'chest-open' : '')}>
-            {wins === 3 ? '🎉' : '🎁'}
-          </span>
-        </div>
-        <div className="reward-saved">
-          {p.demo
-            ? 'Demo adventure'
-            : p.saveStatus || 'Your adventure is saved as you go'}
-        </div>
-      </footer>
 
-      {p.result?.correct && (
-        <Celebration
-          correctAnswers={p.stars / 10}
-          name={p.name}
-          topicName={p.topic.name}
-          levelUp={p.levelUp}
-          mastered={p.mastered}
-          nextLevel={Math.min(
-            p.totalLevels,
-            p.levelUp ? p.level + 1 : p.level
-          )}
-        />
-      )}
+
+
     </section>
   );
 }

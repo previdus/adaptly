@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { generate, journey, journeyFor, questionTime, skills, topics } from "../lib/learning";
+import { generate, journey, journeyFor, progressFromTopic, questionTime, skills, topics } from "../lib/learning";
 import { questionBank, topicLabel } from "../lib/topic-bank";
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
 const lcm = (a: number, b: number): number => (a / gcd(a, b)) * b;
 
 describe("Spec 02: Question Banks & Procedural Generators", () => {
-  it("FR-2.1: provides a validated 200-question bank with unique IDs and prompts for all 7 topics", () => {
+  it("FR-2.1: provides a validated 200-question bank with unique IDs and prompts for all registered topics", () => {
     for (const topic of topics) {
       const bank = questionBank(topic.id);
       assert.equal(bank.length, 200, `Expected 200 questions for ${topic.id}`);
@@ -163,7 +163,7 @@ const expectedPracticeSizes = {
 
 function checkPracticeFact(q: ReturnType<typeof generate>) {
   const { skill, level, a, b, answer, topicId } = q;
-  if (topicId === "english") {
+  if (topicId?.startsWith("english")) {
     assert.ok(q.options?.includes(String(answer)));
     assert.equal(new Set(q.options).size, q.options?.length);
     assert.ok(q.options && q.options.length >= 2 && q.options.length <= 4);
@@ -237,4 +237,45 @@ it("teaches that the HCF of two numbers can be one", () => {
   }
   assert.ok(answers.has(1));
   assert.ok(answers.size > 1);
+});
+
+it("offers each existing grammar skill as a separate three-stage game topic", () => {
+  const grammar = topics.filter(topic => topic.id.startsWith("english-"));
+  assert.equal(grammar.length, 8);
+  for (const [index, topic] of grammar.entries()) {
+    assert.deepEqual(journeyFor(topic.id).map(stage => [stage.skill, stage.level]),
+      [1, 2, 3].map(level => [29 + index, level]));
+    const bank = questionBank(topic.id);
+    assert.equal(bank.length, 200);
+    assert.deepEqual([...new Set(bank.map(q => q.step))], [1, 2, 3]);
+    assert.ok(bank.every(q => q.topicId === topic.id && q.options?.includes(String(q.answer))));
+  }
+});
+
+
+it("uses old grammar attempts to resume the corresponding new topic", () => {
+  const history = Array.from({ length: 3 }, () => ({
+    skill: 30, level: 1, correct: true, seconds: 12, hinted: false,
+    prompt: "A prior pronoun question", answer: "we", given: "we", at: 1
+  }));
+  assert.deepEqual(progressFromTopic("english-pronouns", history), { stage: 1, run: 0 });
+  assert.deepEqual(progressFromTopic("english-nouns", history), { stage: 0, run: 0 });
+});
+
+it("includes a specific explanation and answer for each grammar game question", () => {
+  for (const topic of topics.filter(t => t.id.startsWith("english"))) {
+    for (const q of questionBank(topic.id)) {
+      assert.ok(q.explanation && q.explanation.length > 100);
+      assert.ok(q.explanation.includes(String(q.answer)));
+    }
+  }
+});
+
+it("includes worked explanations throughout every Maths game bank", () => {
+  for (const topic of topics.filter(t => !t.id.startsWith("english"))) {
+    for (const q of questionBank(topic.id)) {
+      assert.ok(q.explanation && q.explanation.includes(String(q.answer)));
+      assert.ok(q.explanation.length > 60);
+    }
+  }
 });

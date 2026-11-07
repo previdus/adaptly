@@ -34,3 +34,11 @@ Adaptly separates pure educational and multiplayer domain logic from dynamic use
 - `buildStarTrackStandings(players, round, totalRounds)` maps multiplayer arena players onto a `0..100` horizontal race track coordinate (`progressPct`), assigns a deterministic cosmic racer icon, and labels each racer's live energy state (`"charged"`, `"thinking"`, or `"spectating"`).
 
 The header theme icon opens the UX Lab controls on demand. Selecting a variant closes the panel.
+
+Level Up uses a viewport-sized focused layout with compact header progress, no large level arch or map, and a fullscreen toggle. Feedback replaces question content with the worked walkthrough, keeping Continue reachable. Fullscreen failures show a helpful status, and reduced-motion behavior remains supported.
+
+Level Up progress is integrated into the top edge of the question card, with a compact level badge and an accessible progressbar. It consumes no separate header row.
+
+The question-card level track displays only level progress, from Level 1 to the final level, with a playful current-level marker. Streak or star counts are excluded from this track.
+
+The left game rail shows the three independent answers needed for the next level, filling from bottom to top. The right rail alone shows elapsed question time. The bottom trail is removed. Both rails stay inside the mobile viewport and have separate accessible labels.

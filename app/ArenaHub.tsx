@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import ArenaCall from './ArenaCall';
+import QuestionWalkthrough from './QuestionWalkthrough';
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,7 +21,7 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import { topicLabel } from '../lib/topic-bank';
+import { questionBank, topicLabel } from '../lib/topic-bank';
 import type { TopicId } from '../lib/learning';
 import { uxCapabilities, type UXVariantId } from '../lib/ux-variants';
 import StarTrackRaceBar from './ux/StarTrackRaceBar';
@@ -419,6 +420,23 @@ export default function ArenaHub({
         </div>
       )}
 
+      {room && room.history.length > 0 && (
+        <section aria-label="Completed round explanations" style={{padding: 20, margin: '16px auto', maxWidth: 1000, background: 'white', borderRadius: 18, color: '#332747'}}>
+          <h2>Learn from each round</h2>
+          {[...room.history].reverse().map((round, index) => {
+            const completed = questionBank(room.topicId || 'multiply').find(item => item.id === round.questionId);
+            if (!completed?.explanation) return null;
+            return (
+              <details key={round.round} open={index === 0}>
+                <summary>Round {round.round} · {completed.prompt}</summary>
+                <p><b>Answer: {completed.answer}</b></p>
+                <p>{completed.explanation}</p>
+                <QuestionWalkthrough question={completed}/>
+              </details>
+            );
+          })}
+        </section>
+      )}
       {!room && (
         <section className="arena-portal">
           <div className="arena-hero-copy">

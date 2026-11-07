@@ -1,7 +1,25 @@
+import { mathsExplanation } from './maths-explanation';
 import { grammarPractice } from './grammar-practice';
 import { multiplicationPractice } from './multiplication-practice';
 import { arithmeticPractice } from './arithmetic-practice';
 import { additionQuestion, additionTime } from './addition-practice';
+
+const grammarTopicDefinitions = [
+  ['english-nouns', 'Nouns', 'Name things, places and plurals', '🔎'],
+  ['english-pronouns', 'Pronouns', 'Replace nouns and show ownership', '👥'],
+  ['english-verbs', 'Verbs', 'Actions and tenses', '⏳'],
+  ['english-modifiers', 'Adjectives & adverbs', 'Describe things and actions', '🎨'],
+  ['english-agreement', 'Subject–verb agreement', 'Match the verb to its subject', '🤝'],
+  ['english-sentences', 'Sentence structure', 'Build and join complete thoughts', '🧱'],
+  ['english-punctuation', 'Capitalization & punctuation', 'Edit capitals, end marks and contractions', '✏️'],
+  ['english-connectives', 'Conjunctions & prepositions', 'Connect ideas and describe relationships', '🔗']
+] as const;
+
+type GrammarTopicId = (typeof grammarTopicDefinitions)[number][0];
+
+export function isGrammarTopic(topic: TopicId | undefined) {
+  return topic === 'english' || Boolean(topic?.startsWith('english-'));
+}
 
 export type TopicId =
   | 'multiply'
@@ -10,7 +28,8 @@ export type TopicId =
   | 'division'
   | 'hcf'
   | 'lcm'
-  | 'english';
+  | 'english'
+  | GrammarTopicId;
 
 export const topics: {
   id: TopicId;
@@ -25,10 +44,11 @@ export const topics: {
   { id: 'division', name: 'Division', icon: '➗', sub: 'Share equally & find remainders', color: 'division' },
   { id: 'hcf', name: 'HCF', icon: '🧩', sub: 'Find the greatest shared factor', color: 'hcf' },
   { id: 'lcm', name: 'LCM', icon: '🔁', sub: 'Find when multiples meet again', color: 'lcm' },
-  { id: 'english', name: 'English Grammar', icon: '📚', sub: 'Words, sentences & punctuation', color: 'english' }
+  { id: 'english', name: 'English Grammar', icon: '📚', sub: 'Words, sentences & punctuation', color: 'english' },
+  ...grammarTopicDefinitions.map(([id, name, sub, icon]) => ({ id, name, sub, icon, color: 'english' }))
 ];
 
-export const skills = [
+const skillDefinitions = [
   {
     topic: 'multiply' as const,
     name: 'Equal groups',
@@ -367,11 +387,21 @@ export const skills = [
   }
 ];
 
+// Keep skill IDs stable so old attempt records map to the new topics.
+export const skills = skillDefinitions.map((skill, index) => ({
+  ...skill,
+  topic: index >= 29 ? grammarTopicDefinitions[index - 29][0] : skill.topic
+}));
+
+export function skillMatchesTopic(skill: number, topic: TopicId) {
+  const actual = skills[skill]?.topic;
+  return topic === 'english' ? isGrammarTopic(actual) : actual === topic;
+}
+
 export const skillsForTopic = (topic: TopicId) =>
   skills
-    .map((s, i) => ({ s, i }))
-    .filter((x) => x.s.topic === topic)
-    .map((x) => x.i);
+    .map((_, i) => i)
+    .filter(i => skillMatchesTopic(i, topic));
 
 export const topicInfo = (id: TopicId) => topics.find((x) => x.id === id)!;
 
@@ -487,7 +517,7 @@ export function advanceTopicProgress(
 
 export function progressFromTopic(topic: TopicId, attempts: Attempt[]): Progress {
   return attempts
-    .filter((a) => skills[a.skill]?.topic === topic)
+    .filter((a) => skillMatchesTopic(a.skill, topic))
     .reduce((p, a) => advanceTopicProgress(topic, p, a), { stage: 0, run: 0 });
 }
 
@@ -567,7 +597,7 @@ export function questionTime(
 ) {
   const topic = skills[q.skill]?.topic;
   if (topic === 'addition' && mode === 'practice') return additionTime(q.skill, q.level);
-  if (topic === 'english') {
+  if (isGrammarTopic(topic)) {
     return Math.round(
       Math.max(
         25,
@@ -665,19 +695,23 @@ export function generate(
   step = 0,
   mode: 'practice' | 'game' = 'practice'
 ): Question {
-  if (skills[skill]?.topic === 'english') {
-    return grammarPractice(skill, level, previous);
+  if (isGrammarTopic(skills[skill]?.topic)) {
+    return { ...grammarPractice(skill, level, previous), topicId: skills[skill].topic };
   }
   if (skills[skill]?.topic === 'addition' && mode === 'practice') {
-    return additionQuestion(skill, level, previous);
+    const q = additionQuestion(skill, level, previous);
+    return { ...q, explanation: mathsExplanation('addition', q) };
   }
   if (skill >= 13 && mode === 'practice') {
-    return arithmeticPractice(skill, level, skills[skill].topic, previous);
+    const topic = skills[skill].topic;
+    const q = arithmeticPractice(skill, level, topic, previous);
+    return { ...q, explanation: mathsExplanation(topic, q) };
   }
   if (skill >= 8) {
     return generateArithmetic(skill, level, previous, step);
   }
-  return multiplicationPractice(skill, level, previous);
+  const q = multiplicationPractice(skill, level, previous);
+  return { ...q, explanation: mathsExplanation('multiply', q) };
 }
 
 const gcd = (x: number, y: number): number => (y ? gcd(y, x % y) : x);

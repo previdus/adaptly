@@ -90,16 +90,47 @@ function draft(index: number, person: string, object: string, variant: number): 
   }
 }
 
+function explain(index: number, answer: string, person: string, object: string, variant: number) {
+  const [base, , past] = actions[variant % actions.length];
+  const notes = [
+    `Ask “What thing was packed?” The answer is the ${object}. ${person} names a person and “packed” tells an action; both are different jobs in the sentence.`,
+    `${places[variant]} names one particular place. A place name is a proper noun and starts with a capital. ${person} is also a proper noun, but the question asks for a place.`,
+    'A plural means more than one. This word has a special plural form, so adding s or es to the singular spelling does not give the form used here. Say the pair aloud to help remember it.',
+    'Find who did the action. Replace that whole subject with a subject pronoun. Use we when the speaker is included and they when the group consists of other people. Us and them are object forms.',
+    'Find who received what the guide showed. Those people are the object, so use us or them. We and they would belong in the subject position, doing the action.',
+    'The blank stands alone after “It is”, so it needs an independent possessive pronoun. Ours includes the speaker; theirs refers to other people. Our and their need a noun after them, such as our book.',
+    `Ask “What did ${person} do?” The word “packed” tells the action. ${person} names the person and ${object} names the thing, so neither is the action verb.`,
+    `“Yesterday” places the action before today. Use the past form ${past} of ${base}. A present form describes a different time, and will plus the base verb points to the future.`,
+    `“Tomorrow” places the action after today. Build the future form with will + ${base}. Keep the verb in its base form after will; do not use the past form ${past}.`,
+    `Ask “What is the ${object} like?” The describing word tells its colour. That makes it an adjective modifying ${object}. A person's name and an action verb do different jobs.`,
+    `The blank comes just before ${object} and describes that thing. A colour word is an adjective. Carefully tells how an action is done, while beneath tells a relationship in place.`,
+    'Ask “How was it packed?” Carefully answers that question and modifies the action packed. Careful is an adjective, used to describe a noun, as in a careful person.',
+    `${person} is one person, so the subject is singular. In the simple present, this subject takes ${answer}. “Every day” tells us the action is a habit.`,
+    `“${person} and I” names two people, so it is a plural subject. Use the base form ${base}. The singular form would agree with just one third-person subject.`,
+    `The main subject is “pile”, which is singular. The phrase “of ${object}s” tells what is in the pile; it does not turn pile into a plural subject. Match rests to pile.`,
+    `This sentence says who did something, ${person}, and what happened, packed the ${object}. It gives a complete thought. A phrase with no main verb, or a clause beginning with after on its own, leaves the reader waiting.`,
+    'The instruction asks for a choice between packing something and leaving it behind. Or signals those alternatives. And adds ideas, because gives a reason, and so introduces a result.',
+    'Read each side of and separately. Both express a complete thought. A comma before and joins these two independent clauses; a comma between a subject and its verb breaks the sentence in the wrong place.',
+    answer === '?' ? 'The sentence directly asks whether something happened. A direct question ends with a question mark. A full stop marks a statement, and a comma cannot finish this question.' : 'The sentence tells what happened rather than asking a question. Finish the statement with a full stop. A comma is used inside a sentence and does not finish this complete thought.',
+    `Capitalize ${person} because it is a person's name and begins the sentence. Capitalize ${places[variant]} because it names a particular place. Ordinary words such as ${object} keep lower-case letters here.`,
+    'Did not becomes didn’t. The apostrophe takes the place of the omitted o in not, so it goes between n and t. Keep the base verb pack after didn’t, just as after did not.',
+    'Wanting to bring something and forgetting it create a contrast between the plan and what happened. But makes that contrast clear. And only adds an idea, or offers a choice, and so signals a result.',
+    `The blank must connect the ${object} to its location, the desk. On is a preposition and describes that relationship. Quickly describes an action; because and but join ideas rather than locating an object.`,
+    'The class needing the item explains why it was brought. Because introduces that reason. Although introduces a contrast, after introduces time, and unless introduces a condition.'
+  ];
+  return `The correct answer is “${answer}”. ${notes[index]}`;
+}
+
 function makeDraft(index: number, person: string, object: string, variant: number, slot: number): Draft {
-  const [prompt, answer, wrong, explanation] = draft(index, person, object, variant);
+  const [prompt, answer, wrong] = draft(index, person, object, variant);
   const options = [...wrong];
   options.splice(slot % (options.length + 1), 0, answer);
-  return { prompt, answer, options, explanation };
+  return { prompt, answer, options, explanation: explain(index, answer, person, object, variant) };
 }
 
 const pools = new Map<number, Draft[]>();
 
-export function grammarPractice(skill: number, level: number, previous: string[]): Question {
+export function grammarPracticePool(skill: number, level: number): readonly Draft[] {
   const index = (skill - 29) * 3 + level - 1;
   let pool = pools.get(index);
   if (!pool) {
@@ -110,6 +141,10 @@ export function grammarPractice(skill: number, level: number, previous: string[]
         ));
     pools.set(index, pool);
   }
-  const question = pickPracticeQuestion(pool, previous);
+  return pool;
+}
+
+export function grammarPractice(skill: number, level: number, previous: string[]): Question {
+  const question = pickPracticeQuestion(grammarPracticePool(skill, level), previous);
   return { ...question, options: [...question.options!], skill, level, a: 0, b: 0, topicId: 'english' };
 }

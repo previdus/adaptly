@@ -70,3 +70,30 @@ Retain the existing skill IDs and stage slots. Prefer unseen questions in the cu
 - **Grammar:** Each concept defines three different tasks, such as subject, object, and possessive pronouns, or singular, plural, and intervening-phrase agreement. Sentence combinations vary the vocabulary and, where appropriate, the answer form. They provide 200 prompts per stage except for the 11 explicitly curated irregular plural forms. Sentence variants practise the same rule in different contexts.
 
 The executable audit exhausts each pool, checks arithmetic and grammar answer invariants, and verifies recycling starts with the least recently seen prompt. Narrow fact ranges intentionally stay below 200 where adding larger numbers would change the skill. Arena and Sprint retain their existing bank generators.
+
+## English Grammar topics
+
+English Grammar opens a topic picker for every game. Existing grammar skill IDs remain stable so past attempts count toward the matching topic.
+
+| Topic | Introduce | Apply | Extend |
+| --- | --- | --- | --- |
+| Nouns | Identify a thing | Identify a proper place name | Form an irregular plural |
+| Pronouns | Replace a subject | Replace an object | Use an independent possessive |
+| Verbs | Identify an action | Choose past tense in context | Rewrite in the future tense |
+| Adjectives & adverbs | Identify a description | Use an adjective before a noun | Use an adverb to describe an action |
+| Subject–verb agreement | Match a singular subject | Match a plural subject | Ignore an intervening plural phrase |
+| Sentence structure | Recognize a complete thought | Join alternatives | Join two independent clauses |
+| Capitalization & punctuation | Choose an end mark | Capitalize names and sentence starts | Edit a contraction |
+| Conjunctions & prepositions | Show contrast | Describe where | Introduce a reason |
+
+Level Up uses the three topic stages and unseen-first practice. Speed Sprint and Last Star Standing use a stable 200-question multiple-choice bank per topic, with a balanced stage mix where the pool permits. Nouns include every curated irregular plural and allocate the remaining questions across the first two stages. Existing mixed Grammar game IDs remain available to resume saved rooms.
+
+Grammar feedback always names the correct answer and explains the rule using the sentence. Level Up waits for Continue after either outcome. Timed games retain an answer review for submitted or completed questions.
+
+All Maths topics provide the answer and worked reasoning after either outcome. Level Up uses Continue for reading time. Sprint retains submitted-answer reviews and Arena reveals completed-round explanations.
+
+Addition Level Up feedback offers an on-demand column walkthrough with captions and optional browser speech. Columns advance from ones, include incoming and outgoing carries, and reveal the final carried digit. Missing-addend examples first explain the missing value, then verify by addition. Replay, pause, manual steps, voice off, and reduced-motion are supported.
+
+Every question exposes a captioned, replayable, optionally narrated worked walkthrough. Steps must correspond to the actual arithmetic or grammar rule. Playback is opt-in, supports manual steps and reduced motion, and cancels voice on close/navigation. Completed-round and submitted-answer reviews expose the same walkthrough.
+
+Voice playback starts from a direct user click, chooses an available English voice, explicitly resumes the speech queue, and reports speech errors or a start timeout. Enabling voice starts narration without requiring a second Play click.
