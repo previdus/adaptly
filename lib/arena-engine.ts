@@ -140,6 +140,7 @@ export function publicState(match: ArenaMatch, playerId: string) {
             seconds: currentQuestion.seconds,
             step: currentQuestion.step,
             options: currentQuestion.options,
+            diagram: currentQuestion.diagram,
           }
         : null,
     players: sortedPlayers.map((player) => ({

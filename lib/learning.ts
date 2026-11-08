@@ -1,3 +1,7 @@
+import { curriculumTopics, isCurriculumTopic, type CurriculumTopicId } from './curriculum-catalog';
+import { curriculumPractice } from './curriculum';
+import type { LearningDiagram } from './curriculum-types';
+import { extendedMathTopics, extendedPractice, isExtendedMathTopic, type ExtendedMathTopic } from './extended-maths';
 import { mathsExplanation } from './maths-explanation';
 import { grammarPractice } from './grammar-practice';
 import { multiplicationPractice } from './multiplication-practice';
@@ -29,7 +33,9 @@ export type TopicId =
   | 'hcf'
   | 'lcm'
   | 'english'
-  | GrammarTopicId;
+  | GrammarTopicId
+  | ExtendedMathTopic
+  | CurriculumTopicId;
 
 export const topics: {
   id: TopicId;
@@ -45,6 +51,8 @@ export const topics: {
   { id: 'hcf', name: 'HCF', icon: '🧩', sub: 'Find the greatest shared factor', color: 'hcf' },
   { id: 'lcm', name: 'LCM', icon: '🔁', sub: 'Find when multiples meet again', color: 'lcm' },
   { id: 'english', name: 'English Grammar', icon: '📚', sub: 'Words, sentences & punctuation', color: 'english' },
+  ...extendedMathTopics.map(topic => ({ id: topic.id, name: topic.name, icon: topic.icon, sub: topic.concepts.join(' · '), color: 'addition' })),
+  ...curriculumTopics.map(topic => ({id: topic.id, name: topic.name, icon: topic.icon, sub: topic.ageBand + ' · ' + topic.prerequisite, color: topic.subject === 'english' ? 'english' : 'addition'})),
   ...grammarTopicDefinitions.map(([id, name, sub, icon]) => ({ id, name, sub, icon, color: 'english' }))
 ];
 
@@ -388,14 +396,26 @@ const skillDefinitions = [
 ];
 
 // Keep skill IDs stable so old attempt records map to the new topics.
-export const skills = skillDefinitions.map((skill, index) => ({
-  ...skill,
-  topic: index >= 29 ? grammarTopicDefinitions[index - 29][0] : skill.topic
-}));
+export const skills = [
+  ...skillDefinitions.map((skill, index) => ({
+    ...skill,
+    topic: index >= 29 ? grammarTopicDefinitions[index - 29][0] : skill.topic
+  })),
+  ...extendedMathTopics.flatMap(topic => topic.concepts.map(name => ({
+    topic: topic.id, name, icon: topic.icon, sub: name, time: 45,
+    vid: '', videoTitle: '', videoChannel: '',
+    help: 'Read the quantities and units, identify the rule, and check the worked solution after your answer.'
+  }))),
+  ...curriculumTopics.flatMap(topic => topic.concepts.map(concept => ({
+    topic: topic.id, name: concept.name, icon: topic.icon, sub: concept.levels.join(' → '), time: 50,
+    vid: '', videoTitle: '', videoChannel: '',
+    help: topic.prerequisite + ' ' + concept.levels.join('. ') + '.'
+  })))
+];
 
 export function skillMatchesTopic(skill: number, topic: TopicId) {
   const actual = skills[skill]?.topic;
-  return topic === 'english' ? isGrammarTopic(actual) : actual === topic;
+  return topic === 'english' ? skill >= 29 && skill < 37 : actual === topic;
 }
 
 export const skillsForTopic = (topic: TopicId) =>
@@ -406,6 +426,8 @@ export const skillsForTopic = (topic: TopicId) =>
 export const topicInfo = (id: TopicId) => topics.find((x) => x.id === id)!;
 
 export type Attempt = {
+  learningGoal?: string;
+  answerFormat?: 'choice' | 'typed';
   skill: number;
   level: number;
   correct: boolean;
@@ -550,6 +572,9 @@ export type Question = {
   visual?: string;
   options?: string[];
   topicId?: TopicId;
+  learningGoal?: string;
+  workedSteps?: { visual: string; text: string }[];
+  diagram?: LearningDiagram;
 };
 
 
@@ -596,6 +621,8 @@ export function questionTime(
   mode: 'practice' | 'game' = 'practice'
 ) {
   const topic = skills[q.skill]?.topic;
+  if (isCurriculumTopic(topic)) return Math.min(110, 25 + q.level * 8 + Math.ceil(q.prompt.split(/\s+/).length / 3));
+  if (isExtendedMathTopic(topic)) return 25 + q.level * 8 + Math.ceil(q.prompt.split(/\s+/).length / 3);
   if (topic === 'addition' && mode === 'practice') return additionTime(q.skill, q.level);
   if (isGrammarTopic(topic)) {
     return Math.round(
@@ -695,6 +722,9 @@ export function generate(
   step = 0,
   mode: 'practice' | 'game' = 'practice'
 ): Question {
+  const topic = skills[skill]?.topic;
+  if (isCurriculumTopic(topic)) return curriculumPractice(topic, skill, level, previous);
+  if (isExtendedMathTopic(topic)) return extendedPractice(topic, skill, level, previous);
   if (isGrammarTopic(skills[skill]?.topic)) {
     return { ...grammarPractice(skill, level, previous), topicId: skills[skill].topic };
   }

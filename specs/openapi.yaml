@@ -25,6 +25,18 @@ paths:
       responses:
         "200":
           description: Current public room state for the requesting player
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  room:
+                    type: object
+                    properties:
+                      question:
+                        oneOf:
+                          - type: "null"
+                          - $ref: "#/components/schemas/LiveQuestion"
         "400":
           description: Missing or invalid room code or player token
         "404":
@@ -47,7 +59,7 @@ paths:
                   maxLength: 20
                 topicId:
                   type: string
-                  enum: [multiply, addition, subtraction, division, hcf, lcm, english, english-nouns, english-pronouns, english-verbs, english-modifiers, english-agreement, english-sentences, english-punctuation, english-connectives]
+                  enum: [multiply, addition, subtraction, division, hcf, lcm, english, english-nouns, english-pronouns, english-verbs, english-modifiers, english-agreement, english-sentences, english-punctuation, english-connectives, place-value, fractions, decimals, percentages, money, measurement, time, geometry, area-volume, data, patterns, ratio, profit-loss, speed, interest, probability, odd-even, negative-numbers, roman-numerals, factors-multiples, prime-numbers, divisibility, order-operations, mental-maths, advanced-fractions, advanced-decimals, lines, symmetry, coordinates, transformations, mixed-units, temperature, scale-drawings, algebra, advanced-data, financial-maths, reasoning, english-articles, english-determiners, english-prepositions, english-conjunctions, english-tenses, english-subject-predicate, english-sentence-types, english-possessives, english-direct-speech, english-editing, english-adjectives, english-adverbs]
                 mode:
                   type: string
                   enum: [classroom, showdown]
@@ -113,3 +125,74 @@ paths:
           description: Cross-origin request blocked
         "429":
           description: Rate limit exceeded (more than 12 attempts in 15 minutes)
+
+# Public room questions may include a diagram object (kind and given geometry/data).
+# The diagram contains given values only. Answer and workedSteps remain excluded from live questions.
+
+components:
+  schemas:
+    LiveQuestion:
+      type: object
+      additionalProperties: false
+      required: [id, concept, prompt, seconds, step]
+      properties:
+        id:
+          type: string
+        concept:
+          type: string
+        prompt:
+          type: string
+        seconds:
+          type: number
+        step:
+          type: integer
+        options:
+          type: array
+          items:
+            type: string
+        diagram:
+          $ref: "#/components/schemas/GivenDiagram"
+    GivenDiagram:
+      description: Given visual data only. Does not contain the expected answer or worked steps.
+      type: object
+      additionalProperties: false
+      required: [kind]
+      properties:
+        kind:
+          enum: [line-graph, grid, pie, number-line, polygon]
+        values:
+          type: array
+          items:
+            type: number
+        labels:
+          type: array
+          items:
+            type: string
+        points:
+          type: array
+          items:
+            type: object
+            required: [x, y, label]
+            properties:
+              x:
+                type: number
+              y:
+                type: number
+              label:
+                type: string
+        mirror:
+          type: object
+          required: [axis, value]
+          properties:
+            axis:
+              enum: [x, y]
+            value:
+              type: number
+        numerator:
+          type: number
+        denominator:
+          type: number
+          exclusiveMinimum: 0
+        sides:
+          type: integer
+          minimum: 3

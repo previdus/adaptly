@@ -97,3 +97,36 @@ Addition Level Up feedback offers an on-demand column walkthrough with captions 
 Every question exposes a captioned, replayable, optionally narrated worked walkthrough. Steps must correspond to the actual arithmetic or grammar rule. Playback is opt-in, supports manual steps and reduced motion, and cancels voice on close/navigation. Completed-round and submitted-answer reviews expose the same walkthrough.
 
 Voice playback starts from a direct user click, chooses an available English voice, explicitly resumes the speech queue, and reports speech errors or a start timeout. Enabling voice starts narration without requiring a second Play click.
+
+## Extended Maths curriculum
+
+Add place value, fractions, decimals, percentages, money, measurement, time, shapes and angles, perimeter/area/volume, data, patterns, ratio, profit/loss/discounts, speed/distance/time, simple interest, and probability. Each has three named concepts with three ascending levels, 200 distinct practice prompts per stage, and a stable 200-question game bank. Use multiple choice for fractional and decimal answers so all game answer validators remain compatible. Each question includes the answer, worked reasoning, a captioned narrated walkthrough, and a starting time budget. Earlier skill indices and learner history remain stable.
+
+### Extended-topic teaching rubric
+
+| Topic | Concept order | Increasing demand |
+| --- | --- | --- |
+| Place value | Digit value → compare → round | More places, then rounding to tens, hundreds and thousands |
+| Fractions | Shaded equal parts → equivalence → like-denominator sums | Identify the whole, scale both terms, combine and simplify |
+| Decimals | Named decimal parts → compare → arithmetic | Tenths before hundredths, then aligned subtraction |
+| Percentages | Out of 100 → amount → change | Interpret the rate, calculate the part, adjust the original |
+| Money | Coin totals → change → unit price | Count equal groups, subtract payment, divide pack cost |
+| Measurement | Length → mass → capacity | Whole-unit conversion, mixed units, reverse conversion |
+| Time | Hours/minutes → elapsed time → weeks/days | Convert, subtract clock times across an hour, combine calendar units |
+| Geometry | Polygon properties → turns → triangle sums | Count vertices, complete angles, infer a missing angle |
+| Perimeter/area/volume | Boundary → surface → space | Sum sides, multiply two dimensions, multiply three |
+| Data | Read values → compare values → mean | Retrieve, subtract, combine and divide |
+| Patterns | Continue → missing internal term → equation | Spot an increment, infer a gap, undo two operations |
+| Ratio | Corresponding quantities → shares → recipes | Recognize parts, find a part value, scale a context |
+| Profit/loss | Amounts → percentages → discounts | Compare cost and sale, divide by cost, subtract a percentage |
+| Speed | Distance → speed → time | Multiply or divide with matching distance and time units |
+| Simple interest | One year → several years → final balance | Find interest, scale by time, add principal |
+| Probability | Favourable outcomes → fraction → complement | Identify the event, divide by all outcomes, count not-event |
+
+Each concept has three levels. Numeric ranges or conversion/operation demand increase within that concept. A new representation can deliberately start with a simpler calculation. Currency examples use rupees. Numeric units are stated in each prompt and excluded from answer entry. The current fraction work focuses on equal and like-denominator parts; later extensions should add unlike denominators with a separate rubric. New topics initially use the built-in narrated explanations for remediation; external video lessons require a separate suitability review.
+
+## Further curriculum expansion
+
+The curriculum catalog is an executable teaching rubric. Every new topic lists prerequisites, ordered concepts, and three named learning goals per concept. Existing numeric skill IDs remain stable. New stages must introduce a representation before combining operations or removing support. Pool sizes are bounded by meaningful distinct questions, with a maximum of 200 per stage. Narrow introductory pools are explicitly allowed to be smaller. A stable 200-question competitive bank samples every stage before redistributing remaining capacity, without repeated prompts. Multiple-choice answers support fractions, signed values, decimals, and language answers in every game.
+
+New questions include correct answers, unique plausible options, worked explanations, topic-specific visual steps, optional voice, timing budgets, and hint support. Published age bands and prerequisites distinguish foundational from later material. The UI must make a large catalog searchable within each subject. External videos require individual review and are not a prerequisite to the built-in worked lesson.

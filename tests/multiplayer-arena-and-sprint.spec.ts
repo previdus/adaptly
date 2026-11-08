@@ -212,3 +212,17 @@ describe("Spec 03: Multiplayer Arena & Celebrations", () => {
     assert.equal(ids.size, 50);
   });
 });
+
+
+it("includes given diagrams without leaking live-question answers or explanations", () => {
+  const match = createTestMatch();
+  match.topicId = "coordinates";
+  match.questionIds = buildMatchQuestionOrder("coordinates");
+  match.round = 0;
+  beginRound(match);
+  const room = publicState(match, "p1");
+  assert.ok(room.question?.diagram);
+  assert.ok(!("answer" in room.question));
+  assert.ok(!("explanation" in room.question));
+  assert.ok(!("workedSteps" in room.question));
+});

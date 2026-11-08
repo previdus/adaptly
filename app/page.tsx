@@ -1,5 +1,8 @@
 'use client';
 
+import ParentLearningReport from './ParentLearningReport';
+import { exportParentCsv, getLearningGoal } from '../lib/parent-insights';
+
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
@@ -10,7 +13,6 @@ import {
   LogOut,
   Play,
   Plus,
-  Sparkles,
   Volume2,
   VolumeX,
   X,
@@ -21,7 +23,6 @@ import {
   generate,
   nextConcept,
   progressFromTopic,
-  selectSkill,
   skills,
   skillsForTopic,
   skillMatchesTopic,
@@ -35,6 +36,9 @@ import {
   type Student,
   type TopicId,
 } from '../lib/learning';
+import { isCurriculumTopic } from '../lib/curriculum-catalog';
+import { curriculumPool, curriculumSkillStart } from '../lib/curriculum';
+import QuestionWalkthrough from './QuestionWalkthrough';
 import PlayArena from './PlayArena';
 import ArenaHub from './ArenaHub';
 import MathSprint from './MathSprint';
@@ -72,6 +76,12 @@ type FamilyApiResponse = {
 };
 
 function conceptExample(index: number) {
+  const topic = skills[index]?.topic;
+  if (isCurriculumTopic(topic)) {
+    const example = curriculumPool(topic, index - curriculumSkillStart(topic), 1)[0];
+    return `${example.prompt} → ${example.answer}`;
+  }
+
   const examples = [
     '4 baskets with 3 apples each → 4 × 3 = 12',
     '3 rows of 5 stars → 3 × 5 = 15',
@@ -165,7 +175,6 @@ export default function Page() {
     [family, classroomTopicFilter]
   );
   const correct = attempts.filter((x) => x.correct).length;
-  const mastered = skills.filter((_, i) => stats(attempts, i).mastered).length;
 
   useEffect(() => {
     started.current = Date.now();
@@ -427,6 +436,8 @@ export default function Page() {
       prompt: q.prompt,
       answer: q.answer,
       given: answer,
+      learningGoal: q.learningGoal || getLearningGoal(q.skill, q.level),
+      answerFormat: q.options ? 'choice' : 'typed',
     };
     setResult(a);
     setStreak(ok ? streak + 1 : 0);
@@ -485,19 +496,7 @@ export default function Page() {
     const csvContent =
       reportTab === 'classroom' && family
         ? exportClassroomCsv(family.students)
-        : [
-            'Subject,Topic,Concept,Attempts,Correct,Independent accuracy,Status',
-            ...skills.map((s, i) => {
-              const t = stats(attempts, i);
-              return `${isGrammarTopic(s.topic) ? 'English Grammar' : 'Maths'},${
-                topicInfo(s.topic).name
-              },${s.name},${t.total},${t.correct},${
-                t.total ? Math.round(t.acc * 100) + '%' : 'Not assessed'
-              },${
-                t.mastered ? 'Secure' : t.total ? 'Developing' : 'Not assessed'
-              }`;
-            }),
-          ].join('\n');
+        : exportParentCsv(student || {id: '', name: '', attempts: []});
     const url = URL.createObjectURL(
       new Blob([csvContent], { type: 'text/csv' })
     );
@@ -526,6 +525,8 @@ export default function Page() {
       return () => clearTimeout(id);
     }
   }, [result, q, misses, help]);
+
+  const helpQuestion = useMemo(() => help === null ? null : q?.skill === help ? q : generate(help, 1), [help, q]);
 
   const time = q ? budget(attempts, q.skill, q.level, q) : 40;
   const topic = topicInfo(activeTopic);
@@ -845,11 +846,11 @@ export default function Page() {
                 </p>
               </section>
 
-              {topics.filter(item => item.id !== 'english').map((topicItem, index) => (
+              {topics.filter(item => item.id !== 'english').sort((a,b) => Number(isGrammarTopic(a.id)) - Number(isGrammarTopic(b.id))).map((topicItem, index) => (
                 <Fragment key={topicItem.id}>
-                  {(index === 0 || topicItem.id === 'english-nouns') && (
+                  {(index === 0 || topicItem.id === topics.find(item => isGrammarTopic(item.id) && item.id !== 'english')?.id) && (
                     <h2 className="subject-coverage-heading">
-                      {topicItem.id === 'english-nouns' ? 'English Grammar' : 'Maths'}
+                      {isGrammarTopic(topicItem.id) ? 'English Grammar' : 'Maths'}
                     </h2>
                   )}
                   <section className="topic-coverage">
@@ -860,11 +861,11 @@ export default function Page() {
                       {skills
                         .map((s, i) => ({ s, i }))
                         .filter((x) => x.s.topic === topicItem.id)
-                        .map(({ s, i }) => (
+                        .map(({ s, i }, conceptIndex) => (
                           <details key={s.name} className="coverage-item">
                             <summary>
                               <span className="coverage-number">
-                                {String(i + 1).padStart(2, '0')}
+                                {String(conceptIndex + 1).padStart(2, '0')}
                               </span>
                               <span>
                                 {s.icon} {s.name}
@@ -1011,7 +1012,7 @@ export default function Page() {
 
           {view === 'report' && (
             <>
-              <div className="page-heading">
+              <div className="page-heading parent-report-heading">
                 <div>
                   <div className="eyebrow">
                     A CLEARER PICTURE, A KINDER NEXT STEP
@@ -1281,234 +1282,12 @@ export default function Page() {
                   </div>
                 </>
               ) : (
-                <>
-                  <section className="learning-journey-note">
-                    <span>🌱</span>
-                    <div>
-                      <span className="eyebrow">THE PATH BEHIND THE PLAY</span>
-                      <h2>
-                        {isMastered
-                          ? `${topic.name} · mastery evidence achieved`
-                          : `${topic.name} · level ${topicLevel} of ${totalStages}`}
-                      </h2>
-                      <p>
-                        {Math.min(path.stage, totalStages)} levels completed ·{' '}
-                        {path.run} of 3 consecutive independent answers toward
-                        the next step. Game progress and concept mastery are
-                        shown separately below.
-                      </p>
-                    </div>
-                  </section>
-
-                  <div className="report-metrics">
-                    <div>
-                      <span>Questions explored</span>
-                      <b>{attempts.length}</b>
-                      <small>
-                        {attempts.filter((x) => x.hinted).length} with a hint
-                      </small>
-                    </div>
-                    <div>
-                      <span>Overall accuracy</span>
-                      <b>
-                        {attempts.length
-                          ? Math.round((correct / attempts.length) * 100) + '%'
-                          : '—'}
-                      </b>
-                      <small>Includes assisted answers</small>
-                    </div>
-                    <div>
-                      <span>Secure concepts</span>
-                      <b>
-                        {mastered} / {skills.length}
-                      </b>
-                      <small>8+ independent recent attempts, ≥80%</small>
-                    </div>
-                    <div>
-                      <span>Highest successful level</span>
-                      <b>
-                        {attempts.some((x) => x.correct && !x.hinted)
-                          ? Math.max(
-                              ...attempts
-                                .filter((x) => x.correct && !x.hinted)
-                                .map((x) => x.level)
-                            )
-                          : '—'}
-                      </b>
-                      <small>Success observed, not a mastery claim</small>
-                    </div>
-                  </div>
-
-                  <div className="report-note">
-                    <Sparkles size={23} />
-                    <div>
-                      <h3>
-                        {attempts.length < 16
-                          ? 'We’re still getting to know your learner.'
-                          : 'Your next small step'}
-                      </h3>
-                      <p>
-                        {attempts.length < 16
-                          ? 'Explore each concept for a fuller picture. A few answers are a starting point, not a diagnosis.'
-                          : `Spend a few calm minutes on ${skills[
-                              selectSkill(attempts, 8)
-                            ].name.toLowerCase()}. Use a visual model, then try a few independent questions.`}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="report-table">
-                    <div className="report-table-head">
-                      <h2>The concept-by-concept picture</h2>
-                      <span>Recent 10 attempts per concept</span>
-                    </div>
-                    <div className="table-scroll">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Topic & concept</th>
-                            <th>Independent accuracy</th>
-                            <th>Evidence</th>
-                            <th>Correct-answer pace</th>
-                            <th>Learning signal</th>
-                            <th>Next step</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {skills.map((s, i) => {
-                            const t = stats(attempts, i);
-                            const n = t.recent.filter((x) => !x.hinted).length;
-                            return (
-                              <tr key={s.name}>
-                                <td>
-                                  <span>{s.icon}</span>{' '}
-                                  <small>{topicInfo(s.topic).name} · </small>
-                                  {s.name}
-                                </td>
-                                <td>
-                                  {n ? `${Math.round(t.acc * 100)}%` : '—'}
-                                  <div className="tiny-track">
-                                    <span
-                                      style={{
-                                        width: n ? t.acc * 100 + '%' : '0%',
-                                      }}
-                                    />
-                                  </div>
-                                </td>
-                                <td>
-                                  {t.total} total · {n} independent recent
-                                </td>
-                                <td>
-                                  {(() => {
-                                    const times = t.recent
-                                      .filter((x) => x.correct && !x.hinted)
-                                      .map((x) => x.seconds)
-                                      .sort((a, b) => a - b);
-                                    return times.length
-                                      ? `${Math.round(
-                                          times[Math.floor(times.length / 2)]
-                                        )}s median (${times.length})`
-                                      : 'More evidence needed';
-                                  })()}
-                                </td>
-                                <td>
-                                  <span
-                                    className={
-                                      'status ' +
-                                      (t.mastered
-                                        ? 'secure'
-                                        : t.total
-                                          ? 'developing'
-                                          : '')
-                                    }
-                                  >
-                                    {t.mastered
-                                      ? 'Feeling secure'
-                                      : t.total
-                                        ? 'Still developing'
-                                        : 'Not assessed'}
-                                  </span>
-                                </td>
-                                <td>
-                                  <button
-                                    className="textbutton"
-                                    onClick={() => start(s.topic)}
-                                  >
-                                    {t.mastered ? 'Keep fresh' : 'Practise'} →
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <div className="report-bottom">
-                    <section className="whitecard">
-                      <h2>Difficulty evidence</h2>
-                      {[1, 2, 3].map((l) => {
-                        const a = attempts.filter(
-                          (x) => x.level === l && !x.hinted
-                        );
-                        return (
-                          <div className="difficulty-row" key={l}>
-                            <b>
-                              Level {l} · {['', 'Discover', 'Build', 'Stretch'][l]}
-                            </b>
-                            <span>
-                              {a.length
-                                ? `${
-                                    a.filter((x) => x.correct).length
-                                  } / ${a.length} independent correct`
-                                : 'Not yet assessed'}
-                            </span>
-                          </div>
-                        );
-                      })}
-                      <p className="micro">
-                        Difficulty is specific to each concept. Question
-                        complexity grows within each concept as the learner
-                        builds confidence.
-                      </p>
-                    </section>
-
-                    <section className="whitecard">
-                      <h2>Recent stepping stones</h2>
-                      {attempts
-                        .filter((x) => !x.correct)
-                        .slice(-4)
-                        .reverse()
-                        .map((a, i) => (
-                          <div className="mistake" key={i}>
-                            <b>{a.prompt}</b>
-                            <span>
-                              Answered {a.given} · Correct {a.answer}
-                              {a.hinted ? ' · Assisted' : ''}
-                            </span>
-                          </div>
-                        ))}
-                      {!attempts.some((x) => !x.correct) && (
-                        <p>
-                          No mistakes recorded yet. Keep exploring for a fuller
-                          picture.
-                        </p>
-                      )}
-                    </section>
-                  </div>
-
-                  <p className="report-disclaimer">
-                    This is a practice snapshot, not a standardised assessment.
-                    Speed is recorded separately and never lowers understanding
-                    scores. Initial time budgets are product estimates; each
-                    question’s starting budget accounts for digit count,
-                    carrying, visual counting and reading. After three
-                    independent correct answers in a concept and difficulty, it
-                    also adapts to the learner’s pace. Only the latest 2,000
-                    attempts per learner are retained.
-                  </p>
-                </>
+                <ParentLearningReport
+                  key={student.id}
+                  student={student}
+                  onContinue={(topic) => start(topic)}
+                  onLesson={(skill) => setHelp(skill)}
+                />
               )}
             </>
           )}
@@ -1789,6 +1568,7 @@ export default function Page() {
                   <b>Example:</b> {conceptExample(help)}
                 </p>
                 <p>{skills[help].help}</p>
+                {helpQuestion && <QuestionWalkthrough question={helpQuestion} initiallyOpen/>}
               </div>
             )}
             <button className="primary" onClick={closeHelp}>

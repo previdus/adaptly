@@ -1,3 +1,5 @@
+import { isCurriculumTopic } from './curriculum-catalog';
+import { isExtendedMathTopic } from './extended-maths';
 import { skills, type Question, type TopicId } from "./learning";
 
 export type UXVariantId = "a" | "b" | "c" | "d";
@@ -366,6 +368,15 @@ function buildEnglishGuidedHint(q: Question): [GuidedHintStep, GuidedHintStep] {
 
 export function buildGuidedHintSteps(q: Question): [GuidedHintStep, GuidedHintStep] {
   const topic = inferTopic(q);
+  if (isExtendedMathTopic(topic) || isCurriculumTopic(topic)) {
+    const firstStep = q.explanation.split('. ').slice(1)[0] || skills[q.skill].help;
+    return [
+      { prompt: 'Which worked step helps solve this problem?', expected: firstStep,
+        choices: buildTextChoices(firstStep, ['Use a different unit without converting', 'Choose a number without checking the question']) },
+      { prompt: 'Apply that method. Which answer fits the requested unit?', expected: String(q.answer),
+        choices: buildTextChoices(String(q.answer), q.options ?? []) }
+    ];
+  }
   if (topic === "english" || typeof q.answer === "string") {
     return buildEnglishGuidedHint(q);
   }

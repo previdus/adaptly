@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, type FormEvent } from 'react';
+import QuestionDiagram from '../QuestionDiagram';
 import { Check } from 'lucide-react';
 import type { Attempt, Question } from '../../lib/learning';
 import {
@@ -26,6 +27,8 @@ function TactileManipulativeView({ q }: { q: Question }) {
   );
   const [revealCarry, setRevealCarry] = useState<boolean>(false);
   const [hopIndex, setHopIndex] = useState<number>(0);
+
+  if (q.diagram) return <QuestionDiagram diagram={q.diagram}/>;
 
   if (model.kind === 'array-splitter') {
     const clampedSplit = Math.min(model.rows - 1, Math.max(1, splitAt));
@@ -175,7 +178,7 @@ function TactileManipulativeView({ q }: { q: Question }) {
       data-manipulative-kind="word-chips"
     >
       <div className="manipulative-header">
-        <span>🔤 Sentence Word Inspector</span>
+        <span>🔎 Question Inspector</span>
         <span>{model.tokens.length} words</span>
       </div>
       <div className="track-stops-row">
@@ -322,7 +325,7 @@ export default function TactilePracticePanel({
       >
         {q.options ? (
           <>
-            <label>Tap your grammar chip</label>
+            <label>Tap your answer</label>
             <div
               className="grammar-options"
               role="radiogroup"

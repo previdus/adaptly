@@ -1,8 +1,10 @@
+import { isExtendedMathTopic } from './extended-maths';
 import type { TopicId } from './learning';
 
 export type WalkthroughQuestion = {
   topicId?: TopicId; a: number; b: number; answer: number | string;
   prompt: string; explanation?: string; skill?: number;
+  workedSteps?: VisualStep[];
 };
 export type VisualStep = { text: string; visual: string };
 export type QuestionLesson = { title: string; steps: VisualStep[] };
@@ -88,13 +90,14 @@ function factorLesson(q: WalkthroughQuestion) {
 }
 
 export function questionWalkthrough(q: WalkthroughQuestion): QuestionLesson {
+  if (q.workedSteps?.length) return {title: 'Let’s work it out together', steps: q.workedSteps};
   let steps: VisualStep[];
-  if (q.topicId?.startsWith('english') || typeof q.answer === 'string') {
+  if (isExtendedMathTopic(q.topicId) || q.topicId?.startsWith('english') || typeof q.answer === 'string') {
     const explanation = q.explanation ?? `The correct answer is ${q.answer}.`;
     const sentences = explanation.split(/(?<=[.!?])\s+/).filter(Boolean);
     steps = [
-      step(q.prompt, 'Read the sentence and decide which rule the question asks you to use.'),
-      ...sentences.map(text => step(String(q.answer), text))
+      step(q.prompt, 'Read the question and identify the quantities, units, or rule it asks you to use.'),
+      ...sentences.map(text => step(isExtendedMathTopic(q.topicId) ? text : String(q.answer), text))
     ];
   } else if (q.topicId === 'subtraction') steps = subtraction(q);
   else if (q.topicId === 'multiply') steps = multiplication(q);

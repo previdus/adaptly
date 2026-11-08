@@ -12,6 +12,7 @@ import {
   Trophy,
   Zap,
 } from 'lucide-react';
+import QuestionDiagram from './QuestionDiagram';
 import QuestionWalkthrough from './QuestionWalkthrough';
 import type { WalkthroughQuestion } from '../lib/question-walkthrough';
 import { questionBank, topicLabel } from '../lib/topic-bank';
@@ -277,6 +278,7 @@ export default function MathSprint({ name, identity, topicId, onBack }: Props) {
                 <span className="sprint-qbadge">{label.toUpperCase()}</span>
                 <h1>{question?.prompt}</h1>
               </div>
+              {question?.diagram && <QuestionDiagram diagram={question.diagram}/>}
               {notice && (
                 <div
                   className={

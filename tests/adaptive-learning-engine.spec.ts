@@ -40,9 +40,9 @@ const makeAttempt = (
 });
 
 describe("Spec 01: Adaptive Learning Engine (lib/learning.ts)", () => {
-  it("exposes all 15 topics and 37 ordered skills across Maths and English Grammar", () => {
-    assert.equal(topics.length, 15);
-    assert.equal(skills.length, 37);
+  it("exposes all 64 topics and 188 ordered skills across Maths and English Grammar", () => {
+    assert.equal(topics.length, 64);
+    assert.equal(skills.length, 188);
     for (const topic of topics) {
       const indices = skillsForTopic(topic.id);
       assert.ok(indices.length >= (topic.id.startsWith("english-") ? 1 : 3), `Topic ${topic.id} has too few skills`);

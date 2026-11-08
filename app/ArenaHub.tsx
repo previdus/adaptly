@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import ArenaCall from './ArenaCall';
+import QuestionDiagram from './QuestionDiagram';
+import type { LearningDiagram } from '../lib/curriculum-types';
 import QuestionWalkthrough from './QuestionWalkthrough';
 import {
   ArrowLeft,
@@ -54,6 +56,7 @@ type RoomQuestion = {
   seconds: number;
   step: number;
   options?: string[];
+  diagram?: LearningDiagram;
 };
 
 type Room = {
@@ -866,7 +869,8 @@ export default function ArenaHub({
                     )}
                   </div>
 
-                  {you?.active &&
+                  {room.question?.diagram && <QuestionDiagram diagram={room.question.diagram}/>}
+              {you?.active &&
                     room.question &&
                     !room.hasAnswered &&
                     (room.question.options ? (

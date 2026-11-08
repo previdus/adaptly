@@ -12,6 +12,8 @@ Specifications in `specs/` and executable tests in `tests/*.spec.ts` define the 
 4. **API Contract**: Any change to `/api/arena` or `/api/family` must keep [`specs/openapi.yaml`](specs/openapi.yaml) synchronized with the route implementation.
 
 ### Specification Index
+- [`specs/07-parent-insights.spec.md`](specs/07-parent-insights.spec.md): Subject-first parent reports, distinct independent evidence, cautious error patterns and evidence-backed next steps.
+- [`specs/06-curriculum-sequences.spec.md`](specs/06-curriculum-sequences.spec.md): Prerequisites, ordered concepts, learning goals, and audited stage pool sizes for the expanded Maths and English curriculum.
 - [`specs/01-adaptive-learning-engine.spec.md`](specs/01-adaptive-learning-engine.spec.md): Ordered topic journeys, 3-streak advancement, hint/mistake resets, adaptive time budgets, 2-mistake remediation lessons, and mastery evidence rules.
 - [`specs/02-question-banks-and-generators.spec.md`](specs/02-question-banks-and-generators.spec.md): 200-question validated banks per topic (Maths and English Grammar), carry/no-carry arithmetic invariants, and visual group/array rules.
 - [`specs/03-multiplayer-arena-and-sprint.spec.md`](specs/03-multiplayer-arena-and-sprint.spec.md): `Speed Sprint` (60s solo) and `Last Star Standing` (multiplayer rooms, 5-letter room codes, optimistic concurrency, and fair-play classroom rules).
@@ -54,3 +56,5 @@ Every new or revised question must ship with a verified answer, a child-friendly
 Show feedback after correct and incorrect submissions. Level Up must allow reading time before Continue. Sprint must retain submitted-answer reviews. Arena may reveal answers and explanations only for completed rounds. Stop speech and timers when a walkthrough closes or the learner navigates away.
 
 Document the teaching rubric before generating questions. Check progressive difficulty, mathematical/grammatical correctness, unambiguous wording, meaningful variety, and unseen-first recycling. Test worked steps against actual operands, including carry/borrow chains, remainders, missing values, and grammar distractors. Browser speech availability varies; keep the complete explanation usable through captions.
+
+New curriculum topics append skills after the existing 85 skill IDs. Preserve catalog order and numeric skill identity once published; add new topics at the end or migrate explicitly. Keep the topic picker in teaching order, and preserve legacy mixed Grammar history even when presenting standalone grammar topics.

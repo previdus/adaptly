@@ -99,3 +99,8 @@
 @media(max-width:620px){.play-viewport.focused-play{grid-template-rows:48px minmax(0,1fr);padding-left:6px;padding-right:6px}.focused-play .play-body{padding-left:27px;padding-right:13px}.answer-trail-rail{width:22px;gap:6px}.trail-rail-goal{font-size:17px;line-height:22px}.trail-rail-steps{width:16px;padding:3px;gap:6px}.trail-rail-step b{font-size:9px}.trail-rail-step.is-earned b{font-size:13px}.focused-play .vertical-clock.clock-right{width:7px}.focused-play .play-card{padding-left:12px;padding-right:12px}}
 @media(max-height:450px) and (min-width:620px){.play-viewport.focused-play{grid-template-rows:38px minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){.trail-rail-step{transition:none}}
+
+.focused-play .question-kicker{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+
+.focused-play .question-level-track{gap:30px}
+@media(max-width:620px){.focused-play .question-level-track{gap:26px}.focused-play .question-track-finish{gap:2px}}

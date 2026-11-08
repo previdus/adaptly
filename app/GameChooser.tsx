@@ -28,6 +28,23 @@ import {
 } from '../lib/learning';
 import './game-chooser.css';
 
+const mathLearningOrder: string[] = [
+  'place-value', 'odd-even', 'roman-numerals', 'addition', 'subtraction', 'mental-maths',
+  'multiply', 'division', 'factors-multiples', 'prime-numbers', 'divisibility', 'hcf', 'lcm',
+  'fractions', 'advanced-fractions', 'decimals', 'advanced-decimals', 'percentages', 'ratio',
+  'money', 'profit-loss', 'interest', 'financial-maths', 'measurement', 'mixed-units', 'time',
+  'negative-numbers', 'temperature', 'geometry', 'lines', 'symmetry', 'coordinates',
+  'transformations', 'area-volume', 'scale-drawings', 'data', 'advanced-data', 'patterns',
+  'order-operations', 'algebra', 'speed', 'probability', 'reasoning'
+];
+const englishLearningOrder: string[] = [
+  'english-nouns', 'english-articles', 'english-pronouns', 'english-verbs', 'english-adjectives',
+  'english-adverbs', 'english-determiners', 'english-agreement', 'english-prepositions',
+  'english-conjunctions', 'english-tenses', 'english-subject-predicate', 'english-sentences',
+  'english-sentence-types', 'english-punctuation', 'english-possessives', 'english-direct-speech',
+  'english-editing'
+];
+
 type Game = 'level' | 'sprint' | 'arena';
 
 type Props = {
@@ -69,6 +86,7 @@ export default function GameChooser({
   onArena,
   onDetails,
 }: Props) {
+  const [topicSearch, setTopicSearch] = useState('');
   const [intro, setIntro] = useState<Game | null>(null);
   const [pickGame, setPickGame] = useState<Game | null>(null);
   const [subjectLevel, setSubjectLevel] = useState<'subjects' | 'maths-topics' | 'grammar-topics'>(
@@ -80,9 +98,13 @@ export default function GameChooser({
     () => false
   );
 
-  const mathTopics = topics.filter((topic) => !isGrammarTopic(topic.id));
-  const grammarTopics = topics.filter((topic) => topic.id.startsWith('english-'));
+  const mathTopics = topics.filter((topic) => !isGrammarTopic(topic.id)).sort((a,b) => mathLearningOrder.indexOf(a.id) - mathLearningOrder.indexOf(b.id));
+  const grammarTopics = topics.filter((topic) => topic.id.startsWith('english-') && !['english-modifiers', 'english-connectives'].includes(topic.id)).sort((a,b) => englishLearningOrder.indexOf(a.id) - englishLearningOrder.indexOf(b.id));
   const englishTopic = topics.find((topic) => topic.id === 'english')!;
+  const visibleTopics = (subjectLevel === 'grammar-topics' ? grammarTopics : mathTopics).filter(topic => {
+    const concepts = skillsForTopic(topic.id).map(index => skills[index].name).join(' ');
+    return `${topic.name} ${topic.sub} ${concepts}`.toLowerCase().includes(topicSearch.trim().toLowerCase());
+  });
   const returnFocus = useRef<HTMLElement | null>(null);
 
   function openIntro(game: Game) {
@@ -94,6 +116,7 @@ export default function GameChooser({
   }
 
   function chooseGame(game: Game) {
+    setTopicSearch('');
     setSubjectLevel('subjects');
     setPickGame(game);
   }
@@ -810,19 +833,24 @@ export default function GameChooser({
                   ? 'Choose a subject, then pick what you want to practise.'
                   : 'Choose the topic you want to explore.'}
               </p>
+              {subjectLevel !== 'subjects' && <label className="topic-search">
+                Find a topic
+                <input type="search" value={topicSearch} onChange={event => setTopicSearch(event.target.value)} placeholder="Search topics or concepts…"/>
+              </label>}
               <div className="topic-pick-grid">
+                {subjectLevel !== 'subjects' && visibleTopics.length === 0 && <p role="status">No matching topics. Try another word.</p>}
                 {subjectLevel === 'subjects' ? (
                   <>
                     <button
                       type="button"
                       className="topic-pick-card topic-maths subject-family-card"
-                      onClick={() => setSubjectLevel('maths-topics')}
+                      onClick={() => { setTopicSearch(''); setSubjectLevel('maths-topics'); }}
                     >
                       <span className="topic-pick-icon">🧮</span>
                       <span className="topic-pick-copy">
                         <strong>Maths</strong>
                         <small>
-                          Multiply · Add · Subtract · Divide · HCF · LCM
+                          Numbers · Fractions · Money · Shapes · Data
                         </small>
                         <em>{mathTopics.length} topics · choose a skill area</em>
                       </span>
@@ -831,7 +859,7 @@ export default function GameChooser({
                     <button
                       type="button"
                       className={`topic-pick-card topic-${englishTopic.color}`}
-                      onClick={() => setSubjectLevel('grammar-topics')}
+                      onClick={() => { setTopicSearch(''); setSubjectLevel('grammar-topics'); }}
                     >
                       <span className="topic-pick-icon">
                         {englishTopic.icon}
@@ -845,7 +873,7 @@ export default function GameChooser({
                     </button>
                   </>
                 ) : (
-                  (subjectLevel === 'grammar-topics' ? grammarTopics : mathTopics).map((topic) => {
+                  visibleTopics.map((topic) => {
                     const indices = skillsForTopic(topic.id);
                     const count = indices.reduce(
                       (n, i) =>

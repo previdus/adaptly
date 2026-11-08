@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, type CSSProperties, type FormEvent 
 import { X, Pause, Play, Volume2, VolumeX, Lightbulb, Check, Maximize, Minimize } from 'lucide-react';
 import type { Attempt, Question, topics } from '../lib/learning';
 import { uxCapabilities, type UXVariantId } from '../lib/ux-variants';
+import QuestionDiagram from './QuestionDiagram';
 import QuestionWalkthrough from './QuestionWalkthrough';
 import './focused-play.css';
 import TactilePracticePanel from './ux/TactilePracticePanel';
@@ -299,7 +300,7 @@ export default function PlayArena(p: Props) {
 
           <div className="play-question-content">
             <span className="question-kicker">
-              {p.topic.name.toUpperCase()} · QUESTION {p.count + 1}
+              {p.q.learningGoal ?? p.topic.name.toUpperCase()} · QUESTION {p.count + 1}
               {p.demo ? ' · DEMO' : ''}
             </span>
             {p.q.skill === 7 && !p.result && !p.hint && (
@@ -326,6 +327,8 @@ export default function PlayArena(p: Props) {
             >
               {p.q.prompt}
             </h2>
+
+            {!useTactile && p.q.diagram && !p.result && !hintOpen && <QuestionDiagram diagram={p.q.diagram}/>}
 
             {!useTactile && p.q.visual && !hintOpen && !p.result && (
               <div

@@ -1,3 +1,7 @@
+import { curriculumTopics, isCurriculumTopic } from './curriculum-catalog';
+import { curriculumPool } from './curriculum';
+import type { LearningDiagram } from './curriculum-types';
+import { extendedQuestion, isExtendedMathTopic } from './extended-maths';
 import { mathsExplanation } from './maths-explanation';
 import { grammarPracticePool } from './grammar-practice';
 import { MULTIPLY_QUESTION_BANK } from './multiply-bank';
@@ -24,6 +28,9 @@ export type GameQuestion = {
   step: number;
   options?: string[];
   explanation?: string;
+  learningGoal?: string;
+  workedSteps?: {visual: string; text: string}[];
+  diagram?: LearningDiagram;
 };
 
 const cached = new Map<TopicId, readonly GameQuestion[]>();
@@ -48,6 +55,51 @@ function expectedAnswer(topic: TopicId, q: GameQuestion) {
 export function questionBank(topic: TopicId): readonly GameQuestion[] {
   const ready = cached.get(topic);
   if (ready) return ready;
+
+  if (isCurriculumTopic(topic)) {
+    const definition = curriculumTopics.find(item => item.id === topic)!;
+    const stagePools = definition.concepts.flatMap((_, concept) => [1, 2, 3].map(level => curriculumPool(topic, concept, level)));
+    const bank: GameQuestion[] = [];
+    const seen = new Set<string>();
+    const cursors = stagePools.map(() => 0);
+    while (bank.length < 200) {
+      let added = false;
+      for (const [index, pool] of stagePools.entries()) {
+        while (cursors[index] < pool.length && seen.has(pool[cursors[index]].prompt)) cursors[index]++;
+        const q = pool[cursors[index]++];
+        if (!q) continue;
+        seen.add(q.prompt);
+        bank.push({...q, id: `${topic}-${bank.length + 1}`, topicId: topic,
+          concept: skills[q.skill].name, step: index + 1, seconds: questionTime(q)});
+        added = true;
+        if (bank.length === 200) break;
+      }
+      if (!added) throw new Error('Not enough distinct game questions for ' + topic);
+    }
+    bank.sort((a, b) => a.step - b.step);
+    cached.set(topic, Object.freeze(bank));
+    return bank;
+  }
+
+  if (isExtendedMathTopic(topic)) {
+    const bank: GameQuestion[] = [];
+    const seen = new Set<string>();
+    for (let stage = 0; stage < 9; stage++) {
+      const concept = Math.floor(stage / 3);
+      const level = stage % 3 + 1;
+      const count = 22 + Number(stage < 2);
+      const pool = Array.from({length:200}, (_, i) => extendedQuestion(topic, concept, level, i));
+      const available = pool.filter(q => !seen.has(q.prompt));
+      for (let i = 0; i < count; i++) {
+        const q = available[Math.floor(i * available.length / count)];
+        seen.add(q.prompt);
+        bank.push({...q, id: `${topic}-${bank.length + 1}`, topicId: topic,
+          concept: skills[q.skill].name, step: stage + 1, seconds: questionTime(q)});
+      }
+    }
+    cached.set(topic, Object.freeze(bank));
+    return bank;
+  }
 
   if (topic === 'multiply') {
     const bank = MULTIPLY_QUESTION_BANK.map((q) => ({
