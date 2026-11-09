@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
-import { X, Pause, Play, Volume2, VolumeX, Lightbulb, Check, Maximize, Minimize } from 'lucide-react';
+import { X, Pause, Play, Volume2, VolumeX, Lightbulb, Check, Maximize, Minimize, BookOpen } from 'lucide-react';
 import type { Attempt, Question, topics } from '../lib/learning';
 import { uxCapabilities, type UXVariantId } from '../lib/ux-variants';
 import QuestionDiagram from './QuestionDiagram';
@@ -40,6 +40,7 @@ type Props = {
   onPause: () => void;
   onSound: () => void;
   onHint: () => void;
+  onLesson: () => void;
   onNext: () => void;
 };
 
@@ -208,6 +209,9 @@ export default function PlayArena(p: Props) {
         </div>
 
         <div className="play-controls">
+          <button id="concept-lesson-trigger" className="play-round-button concept-lesson-trigger" type="button" onClick={p.onLesson} aria-label="Open this concept lesson" title="Learn this idea">
+            <BookOpen size={18} /><span>Lesson</span>
+          </button>
           <button className="play-round-button" type="button" onClick={() => void toggleFullscreen()} aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'} title={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}>
             {fullscreen ? <Minimize size={18}/> : <Maximize size={18}/>}
           </button>

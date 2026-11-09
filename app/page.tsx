@@ -38,7 +38,8 @@ import {
 } from '../lib/learning';
 import { isCurriculumTopic } from '../lib/curriculum-catalog';
 import { curriculumPool, curriculumSkillStart } from '../lib/curriculum';
-import QuestionWalkthrough from './QuestionWalkthrough';
+import ConceptLesson from './ConceptLesson';
+import { openedLessonVideos, recordLessonVisit, shouldIntroduceLesson } from '../lib/concept-lessons';
 import PlayArena from './PlayArena';
 import ArenaHub from './ArenaHub';
 import MathSprint from './MathSprint';
@@ -146,6 +147,7 @@ export default function Page() {
   const [result, setResult] = useState<Attempt | null>(null);
   const [hint, setHint] = useState(false);
   const [help, setHelp] = useState<number | null>(null);
+  const [lessonIntro, setLessonIntro] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -345,6 +347,12 @@ export default function Page() {
       const topicAttempts = as.filter((a) => skillMatchesTopic(a.skill, topic));
       const previous = topicAttempts.map((attempt) => attempt.prompt);
       setQ(generate(skill, level, previous, progress.run));
+      const state = currentFamily.current;
+      const learner = state?.students[state.active];
+      const introduce = shouldIntroduceLesson(learner, skill, level);
+      setLessonIntro(introduce);
+      setIsRecovery(false);
+      setHelp(introduce ? skill : null);
       setAnswer('');
       setResult(null);
       setHint(false);
@@ -479,8 +487,19 @@ export default function Page() {
     newQuestion(target, false, attempts, activeTopic);
   }, [activeTopic, attempts, misses, newQuestion, progressFor, q, result]);
 
-  function closeHelp() {
+  function closeHelp(outcome: 'explored' | 'skipped' = 'explored', videos: string[] = []) {
     const s = help;
+    const state = currentFamily.current;
+    if (s !== null && state) {
+      const nextState = structuredClone(state);
+      nextState.students[nextState.active] = recordLessonVisit(
+        nextState.students[nextState.active], s,
+        view === 'practice' && q?.skill === s ? q.level : 1,
+        outcome, videos,
+      );
+      persist(nextState);
+    }
+    setLessonIntro(false);
     setHelp(null);
     if (isRecovery && s !== null) {
       setIsRecovery(false);
@@ -526,7 +545,6 @@ export default function Page() {
     }
   }, [result, q, misses, help]);
 
-  const helpQuestion = useMemo(() => help === null ? null : q?.skill === help ? q : generate(help, 1), [help, q]);
 
   const time = q ? budget(attempts, q.skill, q.level, q) : 40;
   const topic = topicInfo(activeTopic);
@@ -929,7 +947,7 @@ export default function Page() {
               answer={answer}
               result={result}
               hint={hint}
-              paused={paused}
+              paused={paused || help !== null}
               elapsed={elapsed}
               time={time}
               level={activeLevel}
@@ -968,6 +986,7 @@ export default function Page() {
                   }
                 }
               }}
+              onLesson={() => { setLessonIntro(false); setHelp(q.skill); }}
               onHint={() => setHint(true)}
               onNext={next}
             />
@@ -1517,68 +1536,16 @@ export default function Page() {
       )}
 
       {help !== null && (
-        <div className="modal-backdrop">
-          <section
-            className="modal lesson-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Learning help"
-          >
-            <button
-              className="close"
-              aria-label="Close lesson"
-              onClick={closeHelp}
-            >
-              <X />
-            </button>
-            <span className="eyebrow">A LITTLE HELP GOES A LONG WAY</span>
-            <h1>
-              {skills[help].icon} {skills[help].name}
-            </h1>
-            <p className="lesson-explanation">{skills[help].help}</p>
-            {skills[help].vid ? (
-              <>
-                <iframe
-                  title={skills[help].videoTitle || skills[help].name}
-                  src={`https://www.youtube-nocookie.com/embed/${
-                    skills[help].vid
-                  }?rel=0&autoplay=${isRecovery ? 1 : 0}`}
-                  allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
-                  allowFullScreen
-                  referrerPolicy="strict-origin-when-cross-origin"
-                />
-                <p className="micro">
-                  {skills[help].videoChannel || 'Adaptly learning studio'} ·{' '}
-                  {skills[help].videoTitle || skills[help].name}. If playback is
-                  blocked,{' '}
-                  <a
-                    target="_blank"
-                    rel="noreferrer"
-                    href={`https://www.youtube.com/watch?v=${skills[help].vid}`}
-                  >
-                    watch on YouTube
-                  </a>
-                  . Your thinking clock is paused.
-                </p>
-              </>
-            ) : (
-              <div className="foundation-lesson">
-                <div className="lesson-array">💡</div>
-                <p>
-                  <b>Example:</b> {conceptExample(help)}
-                </p>
-                <p>{skills[help].help}</p>
-                {helpQuestion && <QuestionWalkthrough question={helpQuestion} initiallyOpen/>}
-              </div>
-            )}
-            <button className="primary" onClick={closeHelp}>
-              {isRecovery
-                ? 'Ready for a gentler question'
-                : 'Got it. Let’s keep exploring'}{' '}
-              <ArrowRight size={18} />
-            </button>
-          </section>
-        </div>
+        <ConceptLesson
+          key={`${help}:${view === 'practice' && q?.skill === help ? q.level : 1}`}
+          skill={help}
+          level={view === 'practice' && q?.skill === help ? q.level : 1}
+          activePrompt={view === 'practice' && q?.skill === help ? q.prompt : ''}
+          openedVideoIds={openedLessonVideos(student)}
+          introductory={lessonIntro}
+          recovery={isRecovery}
+          onFinish={closeHelp}
+        />
       )}
     </div>
   );

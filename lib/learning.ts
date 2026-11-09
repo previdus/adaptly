@@ -451,6 +451,11 @@ export type Student = {
   id: string;
   name: string;
   attempts: Attempt[];
+  lessonVisits?: Record<string, {
+    at: number;
+    outcome: 'explored' | 'skipped';
+    openedVideoIds: string[];
+  }>;
   progress?: Progress;
   topicProgress?: Partial<Record<TopicId, Progress>>;
 };

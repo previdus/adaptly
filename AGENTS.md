@@ -12,6 +12,7 @@ Specifications in `specs/` and executable tests in `tests/*.spec.ts` define the 
 4. **API Contract**: Any change to `/api/arena` or `/api/family` must keep [`specs/openapi.yaml`](specs/openapi.yaml) synchronized with the route implementation.
 
 ### Specification Index
+- [`specs/09-concept-lessons.spec.md`](specs/09-concept-lessons.spec.md): Skippable learn-first stories, separate worked examples, paused clocks, learner-specific lesson history and reviewed video resources.
 - [`specs/08-topic-navigation.spec.md`](specs/08-topic-navigation.spec.md): Shared teaching order and staged topic navigation without changing saved skill identities.
 - [`specs/07-parent-insights.spec.md`](specs/07-parent-insights.spec.md): Subject-first parent reports, distinct independent evidence, cautious error patterns and evidence-backed next steps.
 - [`specs/06-curriculum-sequences.spec.md`](specs/06-curriculum-sequences.spec.md): Prerequisites, ordered concepts, learning goals, and audited stage pool sizes for the expanded Maths and English curriculum.
@@ -59,3 +60,9 @@ Show feedback after correct and incorrect submissions. Level Up must allow readi
 Document the teaching rubric before generating questions. Check progressive difficulty, mathematical/grammatical correctness, unambiguous wording, meaningful variety, and unseen-first recycling. Test worked steps against actual operands, including carry/borrow chains, remainders, missing values, and grammar distractors. Browser speech availability varies; keep the complete explanation usable through captions.
 
 New curriculum topics append skills after the existing 85 skill IDs. Preserve catalog order and numeric skill identity once published; add new topics at the end or migrate explicitly. Keep the topic picker in teaching order, and preserve legacy mixed Grammar history even when presenting standalone grammar topics.
+
+## Learn-first content contract
+
+Every future topic and concept must work with the Level Up concept lesson before release. Add a concrete story seed in `lib/lesson-stories.ts`, verify a separate example at each difficulty, and explain one small idea before the worked steps. Keep language and models appropriate to the current stage: do not introduce carrying or hundreds in a first lesson on joining small groups. Keep Skip and the in-question Lesson button available, pause timing during lessons, and store lesson visits separately from assessment.
+
+Video selection must use actual publisher URLs and retain title, channel, relevance notes and review status. Screen title/language mismatches, reuploads and compilation videos. Map resources to relevant stages; do not fill a gap with an unrelated video. Prefer one strong match over two weak ones. Reuse shared resources without forcing repeated viewing. Run `node scripts/review-lesson-videos.mjs` to refresh candidate metadata; this verifies publisher metadata, not full content or playback. Complete playback/content review separately and never describe metadata screening as having watched a video. Captions and local story lessons must remain usable without YouTube or speech.

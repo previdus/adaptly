@@ -1,0 +1,1247 @@
+[
+  {
+    "key": "multiply",
+    "query": "Multiplication equal groups Numberock",
+    "candidates": [
+      {
+        "id": "gzFbUZ8VjEg",
+        "title": "Equal Groups Multiplication Song | Repeated Addition Using Arrays"
+      }
+    ]
+  },
+  {
+    "key": "place-value",
+    "query": "Math Antics Place Value",
+    "candidates": [
+      {
+        "id": "T5Qf0qSSJFI",
+        "title": "Math Antics - Place Value",
+        "channel": "mathantics"
+      },
+      {
+        "id": "vO7s6ynzh3M",
+        "title": "Math Antics Exercise Video 1: Place Value",
+        "channel": "PercyFlyboatToy5872"
+      }
+    ]
+  },
+  {
+    "key": "hcf",
+    "query": "Greatest common factor Math with Mr J",
+    "candidates": [
+      {
+        "id": "IRHwkNBpG_Q",
+        "title": "Factors | Common Factors | Greatest Common Factor (GCF) | Math with Mr. J"
+      },
+      {
+        "id": "vBcmH5TmTxM",
+        "title": "Greatest Common Factor (GCF) | A Step-by-Step Guide | Math with Mr. J"
+      }
+    ]
+  },
+  {
+    "key": "addition",
+    "query": "Addition for kids Learn Bright",
+    "candidates": [
+      {
+        "id": "0_932pytnZM",
+        "title": "Basic Addition for Kids | A quick and fun addition crash course"
+      },
+      {
+        "id": "hE_6GaVcoJU",
+        "title": "Learn Addition for Kids | Fun & Easy Adding Numbers with Besiny | Preschool Maths"
+      }
+    ]
+  },
+  {
+    "key": "division",
+    "query": "Division for kids Learn Bright",
+    "candidates": [
+      {
+        "id": "OTTqk5VX3qI",
+        "title": "Division for Kids | Learn an easy way to divide numbers"
+      },
+      {
+        "id": "-Nr_UHiX8MI",
+        "title": "ASL Division for Kids"
+      }
+    ]
+  },
+  {
+    "key": "addition-carry",
+    "query": "Addition regrouping Khan Academy kids",
+    "candidates": [
+      {
+        "id": "FNR32yOJ0vs",
+        "title": "Adding and regrouping",
+        "channel": "KhanAcademyEspañol"
+      },
+      {
+        "id": "9hM32lsQ4aI",
+        "title": "Adding three digit numbers with regrouping | Addition and subtraction | Arithmetic | Khan Academy"
+      }
+    ]
+  },
+  {
+    "key": "lcm",
+    "query": "Least common multiple Math with Mr J",
+    "candidates": [
+      {
+        "id": "qs0I6aQu4cY",
+        "title": "Multiples | Common Multiples | Least Common Multiple (LCM) | Math with Mr. J"
+      },
+      {
+        "id": "53Ed5yjBELc",
+        "title": "Least Common Multiple (LCM) | Math with Mr. J"
+      }
+    ]
+  },
+  {
+    "key": "multiply-array",
+    "query": "Multiplication arrays Numberock",
+    "candidates": [
+      {
+        "id": "gzFbUZ8VjEg",
+        "title": "Equal Groups Multiplication Song | Repeated Addition Using Arrays",
+        "channel": "Numberock"
+      }
+    ]
+  },
+  {
+    "key": "divisibility",
+    "query": "Divisibility rules Math with Mr J",
+    "candidates": [
+      {
+        "id": "cqnYjR46T58",
+        "title": "Divisibility Rules (2, 3, 4, & 5)"
+      },
+      {
+        "id": "OPz99FFbo7M",
+        "title": "Divisibility Rules (6, 7, 8, 9, & 10)"
+      }
+    ]
+  },
+  {
+    "key": "roman-numerals",
+    "query": "Math Antics Roman Numerals",
+    "candidates": [
+      {
+        "id": "P_qD1GJ1dR8",
+        "title": "Math Antics - Roman Numerals",
+        "channel": "mathantics"
+      },
+      {
+        "id": "hqdmO3HO-wU",
+        "title": "Math Antics Exercise Video 6: Roman Numerals"
+      }
+    ]
+  },
+  {
+    "key": "factors-multiples",
+    "query": "Factors multiples Math with Mr J",
+    "candidates": [
+      {
+        "id": "N_S_wrN8ue8",
+        "title": "Factors vs. Multiples Explained | Common Factors, GCF, and LCM"
+      },
+      {
+        "id": "1qPfLkOEuYY",
+        "title": "Multiples vs. Factors | What are Multiples and Factors? | Math with Mr. J"
+      }
+    ]
+  },
+  {
+    "key": "advanced-fractions",
+    "query": "Math Antics Adding Subtracting Fractions",
+    "candidates": [
+      {
+        "id": "5juto2ze8Lg",
+        "title": "Math Antics - Adding and Subtracting Fractions",
+        "channel": "mathantics"
+      },
+      {
+        "id": "_BgblvF90UE",
+        "title": "Math Antics - Adding & Subtracting Integers",
+        "channel": "mathantics"
+      }
+    ]
+  },
+  {
+    "key": "prime-numbers",
+    "query": "Math Antics Prime Factorization",
+    "candidates": [
+      {
+        "id": "XGbOiYhHY2c",
+        "title": "Math Antics - Prime Factorization",
+        "channel": "mathantics"
+      },
+      {
+        "id": "PKRz9LrOmgo",
+        "title": "Math Antics Exercise Video 10: Prime Factorization",
+        "channel": "PercyFlyboatToy5872"
+      }
+    ]
+  },
+  {
+    "key": "fractions",
+    "query": "Math Antics Fractions are parts",
+    "candidates": [
+      {
+        "id": "CA9XLJpQp3c",
+        "title": "Math Antics - Fractions Are Parts",
+        "channel": "mathantics"
+      },
+      {
+        "id": "Uz07Y3tMP4o",
+        "title": "Math Antics Fractions Are Parts",
+        "channel": "Megan Gallant"
+      }
+    ]
+  },
+  {
+    "key": "odd-even",
+    "query": "Odd even numbers Numberock",
+    "candidates": [
+      {
+        "id": "-kHtGbnYKGc",
+        "title": "Even and Odd Numbers Song for Kids | Odds and Evens for Grades 2 & 3",
+        "channel": "Numberock"
+      },
+      {
+        "id": "NYje80asREM",
+        "title": "Even & Odd Numbers Song"
+      }
+    ]
+  },
+  {
+    "key": "rounding",
+    "query": "Math Antics Rounding",
+    "candidates": [
+      {
+        "id": "fd-E18EqSVk",
+        "title": "Math Antics - Rounding",
+        "channel": "mathantics"
+      },
+      {
+        "id": "pBwPaX3bEHI",
+        "title": "Math Antics Rounding",
+        "channel": "Megan Gallant"
+      }
+    ]
+  },
+  {
+    "key": "mixed-units",
+    "query": "Metric conversion Math with Mr J",
+    "candidates": [
+      {
+        "id": "kOJFSH_Bn9U",
+        "title": "Metric Units of Length | Convert mm, cm, m and km"
+      },
+      {
+        "id": "ptrKThVQwh4",
+        "title": "Metric Units of Mass | Convert mg, g, and kg"
+      }
+    ]
+  },
+  {
+    "key": "negative-numbers",
+    "query": "Math Antics Negative Numbers",
+    "candidates": [
+      {
+        "id": "OAoLCXpao6s",
+        "title": "Math Antics - Negative Numbers",
+        "channel": "mathantics"
+      },
+      {
+        "id": "yZPR14JV-gA",
+        "title": "Math Antics Exercise Video 64: Negative Numbers",
+        "channel": "PercyFlyboatToy5872"
+      }
+    ]
+  },
+  {
+    "key": "temperature",
+    "query": "Temperature negative numbers Math with Mr J",
+    "candidates": []
+  },
+  {
+    "key": "ratio",
+    "query": "Math Antics Ratios Rates",
+    "candidates": [
+      {
+        "id": "RQ2nYUBVvqI",
+        "title": "Math Antics - Ratios And Rates",
+        "channel": "mathantics"
+      },
+      {
+        "id": "NB9KLSeRJzA",
+        "title": "Math Antics Ratios & Rates",
+        "channel": "Megan Gallant"
+      }
+    ]
+  },
+  {
+    "key": "time",
+    "query": "Math Antics Telling Time",
+    "candidates": [
+      {
+        "id": "QU-XUmujbuM",
+        "title": "Math Antics - Telling Time",
+        "channel": "mathantics"
+      },
+      {
+        "id": "094c3SECB40",
+        "title": "Math Antics Telling Time",
+        "channel": "Megan Gallant"
+      }
+    ]
+  },
+  {
+    "key": "decimals",
+    "query": "Math Antics Decimal Place Value",
+    "candidates": [
+      {
+        "id": "KG6ILNOiMgM",
+        "title": "Math Antics - Decimal Place Value",
+        "channel": "mathantics"
+      },
+      {
+        "id": "YobZcYMPeAA",
+        "title": "Math Antics Exercise Video 2: Decimal Place Value",
+        "channel": "PercyFlyboatToy5872"
+      }
+    ]
+  },
+  {
+    "key": "percentages",
+    "query": "Math Antics What are Percentages",
+    "candidates": [
+      {
+        "id": "JeVSmq1Nrpw",
+        "title": "Math Antics - What Are Percentages?",
+        "channel": "mathantics"
+      },
+      {
+        "id": "Uf-Rl1e2I4Q",
+        "title": "Math Antics - What Percent Is It?",
+        "channel": "mathantics"
+      }
+    ]
+  },
+  {
+    "key": "money",
+    "query": "Money change kids Learn Bright",
+    "candidates": []
+  },
+  {
+    "key": "geometry",
+    "query": "Math Antics Polygons",
+    "candidates": [
+      {
+        "id": "IaoZhhx_I9s",
+        "title": "Math Antics - Polygons",
+        "channel": "mathantics"
+      },
+      {
+        "id": "7e6yg21A7WM",
+        "title": "Polygons - Math Antics",
+        "channel": "Math Antics"
+      }
+    ]
+  },
+  {
+    "key": "lines",
+    "query": "Math Antics Points Lines Planes",
+    "candidates": [
+      {
+        "id": "k5etrWdIY6o",
+        "title": "Math Antics - Points, Lines, & Planes",
+        "channel": "mathantics"
+      },
+      {
+        "id": "1y0CwRnqUwc",
+        "title": "Math Antics   Points, Lines, & Planes",
+        "channel": "Form 1O"
+      }
+    ]
+  },
+  {
+    "key": "advanced-decimals",
+    "query": "Math Antics Decimal Arithmetic",
+    "candidates": [
+      {
+        "id": "kwh4SD1ToFc",
+        "title": "Math Antics - Decimal Arithmetic",
+        "channel": "mathantics"
+      },
+      {
+        "id": "jF-DRJg3zNM",
+        "title": "Math Antics Exercise Video 18: Decimal Arithmetic",
+        "channel": "PercyFlyboatToy5872"
+      }
+    ]
+  },
+  {
+    "key": "measurement",
+    "query": "Math Antics Metric System",
+    "candidates": [
+      {
+        "id": "ZNX-a-5jGeM",
+        "title": "Math Antics - Intro to the Metric System",
+        "channel": "mathantics"
+      },
+      {
+        "id": "RJXy9BqGohQ",
+        "title": "- YouTube (https://www.youtube.com/watch?v=RJXy9BqGohQ)"
+      }
+    ]
+  },
+  {
+    "key": "symmetry",
+    "query": "Math Antics Symmetry",
+    "candidates": [
+      {
+        "id": "QHq3CSoal0I",
+        "title": "Math Antics - Symmetry",
+        "channel": "mathantics"
+      },
+      {
+        "id": "dXHt08QkFIY",
+        "title": "- YouTube (https://www.youtube.com/watch?v=dXHt08QkFIY)",
+        "channel": "MATH-N-ROLL"
+      }
+    ]
+  },
+  {
+    "key": "advanced-data",
+    "query": "Math Antics Data Graphs",
+    "candidates": [
+      {
+        "id": "hcgThf5mv38",
+        "title": "Math Antics - Data And Graphs",
+        "channel": "mathantics"
+      }
+    ]
+  },
+  {
+    "key": "speed",
+    "query": "Speed distance time Math with Mr J",
+    "candidates": [
+      {
+        "id": "fSQ1mi5WIgI",
+        "title": "Speed, Distance and Time - Mr Mathematics",
+        "channel": "Jonathan Robinson"
+      },
+      {
+        "id": "4d0HrN1U-4U",
+        "title": "SPEED: calculate a TIME or a DISTANCE"
+      }
+    ]
+  },
+  {
+    "key": "algebra",
+    "query": "Math Antics What is Algebra",
+    "candidates": [
+      {
+        "id": "NybHckSEQBI",
+        "title": "Algebra Basics: What Is Algebra? - Math Antics",
+        "channel": "mathantics"
+      },
+      {
+        "id": "FEUR8GrfOlE",
+        "title": "Algebra Basics: What Is Algebra? - Math Antics",
+        "channel": "MATHS SHORT TRICKS BY VIKRAM SIR "
+      }
+    ]
+  },
+  {
+    "key": "patterns",
+    "query": "Math Antics Number Patterns",
+    "candidates": [
+      {
+        "id": "vV7C7bXm4VI",
+        "title": "Math Antics - Number Patterns",
+        "channel": "mathantics"
+      },
+      {
+        "id": "TkUwJEE35N8",
+        "title": "Math Antics Exercise Video 11: Number Patterns",
+        "channel": "PercyFlyboatToy5872"
+      }
+    ]
+  },
+  {
+    "key": "order-operations",
+    "query": "Math Antics Order Operations",
+    "candidates": [
+      {
+        "id": "dAgfnK528RA",
+        "title": "Math Antics - Order Of Operations",
+        "channel": "mathantics"
+      },
+      {
+        "id": "aORsWArRS3k",
+        "title": "Be Careful Many Will Get It Wrong: Order of Operations Explained | Math Antics |",
+        "channel": "Math Made Easy With JOHN "
+      }
+    ]
+  },
+  {
+    "key": "coordinates",
+    "query": "Math Antics Graphing Coordinate Plane",
+    "candidates": [
+      {
+        "id": "9Uc62CuQjc4",
+        "title": "Algebra Basics: Graphing On The Coordinate Plane - Math Antics",
+        "channel": "mathantics"
+      },
+      {
+        "id": "Mgq0iHhyV1g",
+        "title": "Algebra Basics: Graphing On The Coordinate Plane - Complete Tutorial for Beginners"
+      }
+    ]
+  },
+  {
+    "key": "probability",
+    "query": "Math Antics Basic Probability",
+    "candidates": [
+      {
+        "id": "KzfWUEJjG18",
+        "title": "Math Antics - Basic Probability",
+        "channel": "mathantics"
+      },
+      {
+        "id": "ijZE4ynxbv4",
+        "title": "Math Antics - Basic probability",
+        "channel": "Learn Math"
+      }
+    ]
+  },
+  {
+    "key": "profit-loss",
+    "query": "Profit loss kids Dont Memorise",
+    "candidates": []
+  },
+  {
+    "key": "data",
+    "query": "Math Antics Mean Median Mode",
+    "candidates": [
+      {
+        "id": "XejjRDwDbwI",
+        "title": "Mean, Median and Mode - Math antics | Statistics and Data"
+      },
+      {
+        "id": "f2LUpJgOi1U",
+        "title": "Math Antics - Mean, Median and Mode"
+      }
+    ]
+  },
+  {
+    "key": "scale-drawings",
+    "query": "Scale drawings Math with Mr J",
+    "candidates": [
+      {
+        "id": "rtkj5KNTD0w",
+        "title": "Scale Drawings",
+        "channel": "Matt Richards"
+      },
+      {
+        "id": "kxS-3KbLEQk",
+        "title": "Drawing Scale Lesson | Mr. Mohamed Ibrahim"
+      }
+    ]
+  },
+  {
+    "key": "transformations",
+    "query": "Math Antics Transformations",
+    "candidates": [
+      {
+        "id": "QHq3CSoal0I",
+        "title": "Math Antics - Symmetry",
+        "channel": "mathantics"
+      },
+      {
+        "id": "3ioBM9PMBI0",
+        "title": "The Four Transformations In Maths"
+      }
+    ]
+  },
+  {
+    "key": "volume",
+    "query": "Math Antics Volume",
+    "candidates": [
+      {
+        "id": "qJwecTgce6c",
+        "title": "Math Antics - Volume",
+        "channel": "mathantics"
+      },
+      {
+        "id": "R9qe5GXK8G0",
+        "title": "Math Antics - Volume",
+        "channel": "Yahia Ahmed"
+      }
+    ]
+  },
+  {
+    "key": "area-volume",
+    "query": "Math Antics Area",
+    "candidates": [
+      {
+        "id": "xCdxURXMdFY",
+        "title": "Math Antics - Area",
+        "channel": "mathantics"
+      },
+      {
+        "id": "O-cawByg2aA",
+        "title": "Math Antics - Circles, Circumference And Area",
+        "channel": "mathantics"
+      }
+    ]
+  },
+  {
+    "key": "english-articles",
+    "query": "Articles Homeschool Pop",
+    "candidates": []
+  },
+  {
+    "key": "english-sentence-types",
+    "query": "Types sentences kids Homeschool Pop",
+    "candidates": [
+      {
+        "id": "WYnpf44ojFU",
+        "title": "Types of Sentences for Kids | Grammar for Elementary Students"
+      },
+      {
+        "id": "QGkcqup4fUo",
+        "title": "English Grammar for Kids | Sentences, Parts of Speech & More",
+        "channel": "Homeschool Pop"
+      }
+    ]
+  },
+  {
+    "key": "english-editing",
+    "query": "Editing sentences kids EasyTeaching",
+    "candidates": []
+  },
+  {
+    "key": "english-possessives",
+    "query": "Possessive nouns kids EasyTeaching",
+    "candidates": [
+      {
+        "id": "vc5quu-Ma7U",
+        "title": "Apostrophes for Possession | Possessive Nouns | EasyTeaching",
+        "channel": "EasyTeaching"
+      },
+      {
+        "id": "dM2gFMAwCfA",
+        "title": "How to teach kids to use #apostrophes to make possessive #plural #nouns & irregular nouns"
+      }
+    ]
+  },
+  {
+    "key": "english-agreement",
+    "query": "Subject verb agreement kids Learn Bright",
+    "candidates": [
+      {
+        "id": "b4_gBq-HqZw",
+        "title": "Subject Verb Agreement | Rules In English Grammar For Kids | Learn Easily"
+      },
+      {
+        "id": "ZqtqnNFfDXE",
+        "title": "Verbs Part 2: Subject-Verb Agreement | English For Kids | Mind Blooming"
+      }
+    ]
+  },
+  {
+    "key": "english-direct-speech",
+    "query": "Direct speech kids EasyTeaching",
+    "candidates": [
+      {
+        "id": "s8a19kuole0",
+        "title": "Using Speech Marks | Punctuating Direct Speech | EasyTeaching",
+        "channel": "EasyTeaching"
+      },
+      {
+        "id": "Xg4XA1UByf4",
+        "title": "The Easy Guide to Reported Speech in English | EasyTeaching",
+        "channel": "EasyTeaching"
+      }
+    ]
+  },
+  {
+    "key": "english-adverbs",
+    "query": "Adverbs kids Homeschool Pop",
+    "candidates": [
+      {
+        "id": "4jxXnHSbicY",
+        "title": "- YouTube (https://www.youtube.com/watch?v=4jxXnHSbicY)",
+        "channel": "Homeschool Pop"
+      },
+      {
+        "id": "xOaMIwak7Ms",
+        "title": "Language Arts Learning Videos for Kids",
+        "channel": "Homeschool Pop"
+      }
+    ]
+  },
+  {
+    "key": "interest",
+    "query": "Simple interest Math with Mr J",
+    "candidates": [
+      {
+        "id": "RwUHW-AJfBI",
+        "title": "Simple Interest",
+        "channel": "Mathematics with Professor Rafael Procopio"
+      },
+      {
+        "id": "4MgDq1_JrBs",
+        "title": "SIMPLE INTEREST Super easy - For beginners"
+      }
+    ]
+  },
+  {
+    "key": "mental-maths",
+    "query": "Mental maths compensation addition kids",
+    "candidates": [
+      {
+        "id": "hi_iy6wHPec",
+        "title": "Mental Math: Addition Using Compensation",
+        "channel": "Mathispower4u"
+      }
+    ]
+  },
+  {
+    "key": "english-adjectives",
+    "query": "Adjectives kids Homeschool Pop",
+    "candidates": [
+      {
+        "id": "4jxXnHSbicY",
+        "title": "- YouTube (https://www.youtube.com/watch?v=4jxXnHSbicY)",
+        "channel": "Homeschool Pop"
+      },
+      {
+        "id": "G_7XAB845Dw",
+        "title": "Adjective Lesson for Children | Describing Words"
+      }
+    ]
+  },
+  {
+    "key": "english-tenses",
+    "query": "Past present future tense kids Learn Bright",
+    "candidates": [
+      {
+        "id": "asUL9sdjMfQ",
+        "title": "Basic Tenses for Kids 👧👦 | Present, Past & Future Tense Made Easy ✨📚"
+      },
+      {
+        "id": "LNgLDWeo5HQ",
+        "title": "Learn English Tenses | Present, Past and Future I Improve Your English #englishgrammar #learnenglish"
+      }
+    ]
+  },
+  {
+    "key": "english-punctuation",
+    "query": "Punctuation kids Scratch Garden",
+    "candidates": [
+      {
+        "id": "LdCOswMeXFQ",
+        "title": "Punctuation Explained (by Punctuation!) | Scratch Garden"
+      },
+      {
+        "id": "0Wrv_ZviMEc",
+        "title": "The Sentence Song | English Songs | Scratch Garden"
+      }
+    ]
+  },
+  {
+    "key": "reasoning",
+    "query": "Multi step word problems Math with Mr J",
+    "candidates": [
+      {
+        "id": "XCWkBAUiBxM",
+        "title": "Solving Multi-Step Equations | Math with Mr. J"
+      },
+      {
+        "id": "D_j-VAKJ1cU",
+        "title": "How to Solve Multi-Step Equations | A Mini Course | Math with Mr. J"
+      }
+    ]
+  },
+  {
+    "key": "english-pronouns",
+    "query": "Pronouns kids Homeschool Pop",
+    "candidates": [
+      {
+        "id": "c4300UidkFg",
+        "title": "Pronouns for Kids | Grammar for Elementary Students"
+      },
+      {
+        "id": "CwQjSsa8VQE",
+        "title": "Learn the Pronouns | Classroom Lesson Video",
+        "channel": "Homeschool Pop"
+      }
+    ]
+  },
+  {
+    "key": "english-nouns",
+    "query": "Common proper nouns Homeschool Pop",
+    "candidates": [
+      {
+        "id": "gQsZr8yrsno",
+        "title": "Common and Proper Nouns for Kids | Grammar for Elementary Students"
+      },
+      {
+        "id": "IFbwruzo_d0",
+        "title": "Common and Proper Nouns Lesson"
+      }
+    ]
+  },
+  {
+    "key": "financial-maths",
+    "query": "Compound interest Math with Mr J",
+    "candidates": [
+      {
+        "id": "GitPZtwJhz4",
+        "title": "The Maths Prof: Compound Interest"
+      },
+      {
+        "id": "JxzhTD50dQg",
+        "title": "Compound Interest - GCSE Maths"
+      }
+    ]
+  },
+  {
+    "key": "english-verbs",
+    "query": "Action verbs kids Homeschool Pop",
+    "candidates": [
+      {
+        "id": "nxtaLqImKH4",
+        "title": "Action Verbs for Kids | Grammar for Elementary Students"
+      },
+      {
+        "id": "a43KsAGZOvc",
+        "title": "Language Arts Lessons for Kids | Grammar, Figurative Language & More"
+      }
+    ]
+  },
+  {
+    "key": "english-sentences",
+    "query": "Complete sentences kids Homeschool Pop",
+    "candidates": [
+      {
+        "id": "QGkcqup4fUo",
+        "title": "English Grammar for Kids | Sentences, Parts of Speech & More",
+        "channel": "Homeschool Pop"
+      }
+    ]
+  },
+  {
+    "key": "english-conjunctions",
+    "query": "Conjunctions kids Homeschool Pop",
+    "candidates": [
+      {
+        "id": "QGkcqup4fUo",
+        "title": "English Grammar for Kids | Sentences, Parts of Speech & More",
+        "channel": "Homeschool Pop"
+      },
+      {
+        "id": "oV5xwP5E9qU",
+        "title": "- YouTube (https://www.youtube.com/watch?v=oV5xwP5E9qU)",
+        "channel": "Homeschool Pop"
+      }
+    ]
+  },
+  {
+    "key": "english-determiners",
+    "query": "Determiners kids EasyTeaching",
+    "candidates": [
+      {
+        "id": "pcYrmHrtLRY",
+        "title": "Determiners: Articles, Demonstratives, Quantifiers & Possessives | EasyTeaching",
+        "channel": "EasyTeaching"
+      }
+    ]
+  },
+  {
+    "key": "english-subject-predicate",
+    "query": "Subject predicate kids Homeschool Pop",
+    "candidates": [
+      {
+        "id": "mYXqMmaDlxs",
+        "title": "Subject and Predicate for Kids"
+      },
+      {
+        "id": "4zUFcxCGLZw",
+        "title": "Subject and Predicate | NEW | Song and Teaching Combo | Award Winning Subject and Predicate for Kids"
+      }
+    ]
+  },
+  {
+    "key": "english-prepositions",
+    "query": "Prepositions kids Scratch Garden",
+    "candidates": [
+      {
+        "id": "xyMrLQ4ZI-4",
+        "title": "The Prepositions Song | English Songs | Scratch Garden"
+      },
+      {
+        "id": "ylyQTl7__IQ",
+        "title": "Prepositions Practice with Animals! | English Grammar Songs | Scratch Garden"
+      }
+    ]
+  },
+  {
+    "key": "speed",
+    "query": "\"Speed Distance Time\" \"Math with Mr. J\"",
+    "candidates": []
+  },
+  {
+    "key": "profit-loss",
+    "query": "\"Profit and Loss\" \"Dont Memorise\"",
+    "candidates": []
+  },
+  {
+    "key": "temperature",
+    "query": "\"Negative Numbers\" \"temperature\" kids youtube",
+    "candidates": [
+      {
+        "id": "EaHet1mwFvA",
+        "title": "1.1 POSITIVE, NEGATIVE NUMBERS AND ZERO FOR TEMPERATURE 7TH GRADE",
+        "channel": "PROF. GERALD"
+      },
+      {
+        "id": "qKOojMSCkTA",
+        "title": "Negative Numbers in Real Life Part 1 - Temperature and Elevation -  - 6.NS.5 - 6.NS.6"
+      }
+    ]
+  },
+  {
+    "key": "scale-drawings",
+    "query": "\"Scale Drawings\" \"Math with Mr. J\"",
+    "candidates": []
+  },
+  {
+    "key": "english-editing",
+    "query": "\"Editing\" \"sentences\" \"EasyTeaching\"",
+    "candidates": []
+  },
+  {
+    "key": "money",
+    "query": "\"Money\" \"change\" \"Learn Bright\"",
+    "candidates": []
+  },
+  {
+    "key": "english-adverbs",
+    "query": "\"Adverbs for Kids\" \"Homeschool Pop\"",
+    "candidates": []
+  },
+  {
+    "key": "transformations",
+    "query": "\"Transformations\" \"Math Antics\"",
+    "candidates": []
+  },
+  {
+    "key": "english-articles",
+    "query": "\"Articles for Kids\" \"Homeschool Pop\"",
+    "candidates": []
+  },
+  {
+    "key": "reasoning",
+    "query": "\"Multi-Step Word Problems\" kids youtube",
+    "candidates": [
+      {
+        "id": "_Vzd16NqR_U",
+        "title": "Multi-Step Word Problems Song | 2-Step Math Problems for Kids | NUMBEROCK"
+      },
+      {
+        "id": "AHk16ZOKS3E",
+        "title": "Multistep Word Problems For Kids"
+      }
+    ]
+  },
+  {
+    "key": "interest",
+    "query": "\"Simple Interest\" \"Math with Mr. J\"",
+    "candidates": []
+  },
+  {
+    "key": "english-tenses",
+    "query": "\"Past Present Future\" \"EasyTeaching\"",
+    "candidates": []
+  },
+  {
+    "key": "profit-loss",
+    "query": "profit loss for kids YouTube",
+    "candidates": [
+      {
+        "id": "JWr_V2_sCic",
+        "title": "Profit and Loss Explained for Kids 🍋 | Fun Business Example + Cost Price & Revenue",
+        "channel": "Kids2GrownupsFinance"
+      },
+      {
+        "id": "rWW6VyxuQBU",
+        "title": "Profit and Loss for Kids | Capital Profit Loss Explained | Fun Kids Learning Song"
+      }
+    ]
+  },
+  {
+    "key": "interest",
+    "query": "simple interest for kids YouTube",
+    "candidates": [
+      {
+        "id": "OrJnq_W0x6I",
+        "title": "Simple vs. Compound Interest | Cash Course | PragerU Kids"
+      },
+      {
+        "id": "htxVlB5ywfc",
+        "title": "Simple Interest vs Compound Interest | Financial Literacy for Kids"
+      }
+    ]
+  },
+  {
+    "key": "english-tenses",
+    "query": "past present future tenses kids YouTube",
+    "candidates": [
+      {
+        "id": "quRDNvMdtvQ",
+        "title": "Tenses in English | Past, Present, and Future Sentences | Learn English Grammar Easily | Sentences"
+      },
+      {
+        "id": "DPOm4Z-HpGY",
+        "title": "The Tenses Song (Past, Present & Future)"
+      }
+    ]
+  },
+  {
+    "key": "english-editing",
+    "query": "proofreading editing sentences kids YouTube",
+    "candidates": [
+      {
+        "id": "6c5_OlfEz20",
+        "title": "Editing Sentences - Video 1"
+      },
+      {
+        "id": "XP5yWz-MNpM",
+        "title": "Editing Writing for Kids! |First and Second Grade|",
+        "channel": "Teaching Without Frills"
+      }
+    ]
+  },
+  {
+    "key": "english-articles",
+    "query": "a an the articles kids YouTube",
+    "candidates": [
+      {
+        "id": "ZALa9vqxBzI",
+        "title": "Articles for Kids | A, An, and The Explained"
+      },
+      {
+        "id": "htkcZ0I_rtE",
+        "title": "How to Use Articles A, An, The – Easy Grammar for Kids!\""
+      }
+    ]
+  },
+  {
+    "key": "scale-drawings",
+    "query": "scale drawings Maths Genie YouTube",
+    "candidates": [
+      {
+        "id": "0y6ZbW5Fj40",
+        "title": "Scale Drawings",
+        "channel": "Maths Genie"
+      },
+      {
+        "id": "UUzhM0hAifA",
+        "title": "Enlargement (Transformations of Shapes)",
+        "channel": "Maths Genie"
+      }
+    ]
+  },
+  {
+    "key": "english-adverbs",
+    "query": "adverbs for kids YouTube",
+    "candidates": [
+      {
+        "id": "2O4ckpd_UjE",
+        "title": "What Is an Adverb? for Kids | Learn about the role of an adverb"
+      },
+      {
+        "id": "VW8JCk_kuyY",
+        "title": "Adverbs for Kids"
+      }
+    ]
+  },
+  {
+    "key": "speed",
+    "query": "speed distance time for kids YouTube",
+    "candidates": [
+      {
+        "id": "1p1sxeq661o",
+        "title": "Learn Distance, Time & Speed Easily | Simple Explanation for Kids with animation ⏱️",
+        "channel": "Learners"
+      },
+      {
+        "id": "4d0HrN1U-4U",
+        "title": "SPEED: calculate a TIME or a DISTANCE"
+      }
+    ]
+  },
+  {
+    "key": "subtraction",
+    "query": "Math Antics Multi Digit Subtraction youtube",
+    "candidates": [
+      {
+        "id": "Y6M89-6106I",
+        "title": "Math Antics - Multi-Digit Subtraction",
+        "channel": "mathantics"
+      },
+      {
+        "id": "RFvYvVMA_n0",
+        "title": "Math Antics Exercise Video 13: Multi-Digit Subtraction",
+        "channel": "PercyFlyboatToy5872"
+      }
+    ]
+  },
+  {
+    "key": "data-mean",
+    "query": "\"Math Antics - Mean Median and Mode\" youtube",
+    "candidates": [
+      {
+        "id": "f2LUpJgOi1U",
+        "title": "Math Antics - Mean, Median and Mode",
+        "channel": "Maths 4 U"
+      },
+      {
+        "id": "gwemwkd00Go",
+        "title": "Math Antics   Mean, Median and Mode",
+        "channel": "Ma. Pinky Ondiano"
+      }
+    ]
+  },
+  {
+    "key": "multiply-two",
+    "query": "Math Antics Multi Digit Multiplication Pt 2 youtube",
+    "candidates": [
+      {
+        "id": "RVYwunbpMHA",
+        "title": "Math Antics - Multi-Digit Multiplication Pt 2",
+        "channel": "mathantics"
+      },
+      {
+        "id": "jI8jvlyQlr0",
+        "title": "Math Antics Exercise Video 14: Multi-Digit Multiplication (Part 1)",
+        "channel": "PercyFlyboatToy5872"
+      }
+    ]
+  },
+  {
+    "key": "interest-simple",
+    "query": "\"simple interest\" \"Khan Academy\" youtube",
+    "candidates": [
+      {
+        "id": "UEBEdEw4WaI",
+        "title": "Introduction to simple interest",
+        "channel": "Khan Academy Brasil"
+      },
+      {
+        "id": "MrjPirfODs0",
+        "title": "Intro to Simple Interest [Hindi] | Commercial Math | Grade 6 | Maths | Khan Academy"
+      }
+    ]
+  },
+  {
+    "key": "english-plurals",
+    "query": "\"plural nouns\" \"Learn Bright\" youtube",
+    "candidates": []
+  },
+  {
+    "key": "transformations-official",
+    "query": "\"Transformations - Math Antics\" youtube",
+    "candidates": []
+  },
+  {
+    "key": "addition-columns",
+    "query": "Math Antics Multi Digit Addition youtube",
+    "candidates": [
+      {
+        "id": "mAvuom42NyY",
+        "title": "Math Antics - Multi-Digit Addition",
+        "channel": "mathantics"
+      },
+      {
+        "id": "1wi8essqEPU",
+        "title": "Math Antics Exercise Video 12: Multi-Digit Addition",
+        "channel": "PercyFlyboatToy5872"
+      }
+    ]
+  },
+  {
+    "key": "multiply-columns",
+    "query": "Math Antics Multi Digit Multiplication Pt 1 youtube",
+    "candidates": [
+      {
+        "id": "FJ5qLWP3Fqo",
+        "title": "Math Antics - Multi-Digit Multiplication Pt 1",
+        "channel": "mathantics"
+      },
+      {
+        "id": "jI8jvlyQlr0",
+        "title": "Math Antics Exercise Video 14: Multi-Digit Multiplication (Part 1)",
+        "channel": "PercyFlyboatToy5872"
+      }
+    ]
+  },
+  {
+    "key": "money-change",
+    "query": "\"making change\" \"Math with Mr. J\" youtube",
+    "candidates": []
+  },
+  {
+    "key": "english-conjunctions-song",
+    "query": "\"conjunctions\" \"Scratch Garden\" youtube",
+    "candidates": []
+  },
+  {
+    "key": "division-long",
+    "query": "Math Antics Long Division youtube",
+    "candidates": [
+      {
+        "id": "LGqBQrUYua4",
+        "title": "Math Antics - Long Division",
+        "channel": "mathantics"
+      },
+      {
+        "id": "oN7efWWkvK0",
+        "title": "Math Antics- Long Division with 2-Digit Divisors",
+        "channel": "Education learning "
+      }
+    ]
+  },
+  {
+    "key": "odd-even-alt",
+    "query": "\"even odd\" \"Learn Bright\" youtube",
+    "candidates": []
+  },
+  {
+    "key": "english-conjunctions-final",
+    "query": "conjunctions for kids Learn Bright youtube",
+    "candidates": [
+      {
+        "id": "ECiFApWcrDU",
+        "title": "Conjunctions for Kids | Learn about coordinating, correlative, and subordinating conjunctions",
+        "channel": "Learn Bright"
+      }
+    ]
+  },
+  {
+    "key": "money-final",
+    "query": "counting money rupees paise for kids youtube",
+    "candidates": [
+      {
+        "id": "K0AzxyyTfLs",
+        "title": "Money Counting for Kids | Learn Indian Rupees | Math for Children",
+        "channel": "Sasu Fun Easy Learning"
+      }
+    ]
+  }
+]
