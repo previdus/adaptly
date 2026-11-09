@@ -12,6 +12,7 @@ Specifications in `specs/` and executable tests in `tests/*.spec.ts` define the 
 4. **API Contract**: Any change to `/api/arena` or `/api/family` must keep [`specs/openapi.yaml`](specs/openapi.yaml) synchronized with the route implementation.
 
 ### Specification Index
+- [`specs/08-topic-navigation.spec.md`](specs/08-topic-navigation.spec.md): Shared teaching order and staged topic navigation without changing saved skill identities.
 - [`specs/07-parent-insights.spec.md`](specs/07-parent-insights.spec.md): Subject-first parent reports, distinct independent evidence, cautious error patterns and evidence-backed next steps.
 - [`specs/06-curriculum-sequences.spec.md`](specs/06-curriculum-sequences.spec.md): Prerequisites, ordered concepts, learning goals, and audited stage pool sizes for the expanded Maths and English curriculum.
 - [`specs/01-adaptive-learning-engine.spec.md`](specs/01-adaptive-learning-engine.spec.md): Ordered topic journeys, 3-streak advancement, hint/mistake resets, adaptive time budgets, 2-mistake remediation lessons, and mastery evidence rules.

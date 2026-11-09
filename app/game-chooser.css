@@ -37,3 +37,5 @@
 .topic-english .topic-pick-copy em{color:#627fba}
 
 .topic-search{display:flex;flex-direction:column;gap:6px;margin:14px 0;font-size:12px;font-weight:800;color:#66547e}.topic-search input{width:100%;min-height:44px;border:1px solid #d9cde9;border-radius:12px;padding:10px 14px;background:#fff;color:#30233e;font-size:16px}.topic-search input:focus-visible{outline:3px solid #ab8ee2;outline-offset:2px}
+
+.topic-teaching-stage { grid-column:1 / -1; margin:16px 0 2px; font-size:15px; line-height:1.5; color:inherit; text-align:left; }

@@ -7,6 +7,7 @@ import { grammarPractice } from './grammar-practice';
 import { multiplicationPractice } from './multiplication-practice';
 import { arithmeticPractice } from './arithmetic-practice';
 import { additionQuestion, additionTime } from './addition-practice';
+import { topicOrder } from './topic-order';
 
 const grammarTopicDefinitions = [
   ['english-nouns', 'Nouns', 'Name things, places and plurals', '🔎'],
@@ -55,6 +56,8 @@ export const topics: {
   ...curriculumTopics.map(topic => ({id: topic.id, name: topic.name, icon: topic.icon, sub: topic.ageBand + ' · ' + topic.prerequisite, color: topic.subject === 'english' ? 'english' : 'addition'})),
   ...grammarTopicDefinitions.map(([id, name, sub, icon]) => ({ id, name, sub, icon, color: 'english' }))
 ];
+
+topics.sort((a, b) => topicOrder(a.id) - topicOrder(b.id));
 
 const skillDefinitions = [
   {

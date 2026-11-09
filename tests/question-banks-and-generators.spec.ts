@@ -242,9 +242,10 @@ it("teaches that the HCF of two numbers can be one", () => {
 it("offers each existing grammar skill as a separate three-stage game topic", () => {
   const grammar = topics.filter(topic => topic.id.startsWith("english-") && journeyFor(topic.id).length === 3);
   assert.equal(grammar.length, 8);
-  for (const [index, topic] of grammar.entries()) {
+  for (const topic of grammar) {
+    const originalSkill = ["english-nouns", "english-pronouns", "english-verbs", "english-modifiers", "english-agreement", "english-sentences", "english-punctuation", "english-connectives"].indexOf(topic.id) + 29;
     assert.deepEqual(journeyFor(topic.id).map(stage => [stage.skill, stage.level]),
-      [1, 2, 3].map(level => [29 + index, level]));
+      [1, 2, 3].map(level => [originalSkill, level]));
     const bank = questionBank(topic.id);
     assert.equal(bank.length, 200);
     assert.deepEqual([...new Set(bank.map(q => q.step))], [1, 2, 3]);

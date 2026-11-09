@@ -1,5 +1,6 @@
 import { isGrammarTopic, skills, topicInfo, type Attempt, type Student, type TopicId } from './learning';
 import { curriculumTopics } from './curriculum-catalog';
+import { topicOrder } from './topic-order';
 
 type Pattern = { code: string; title: string; action: string };
 export type ParentFocus = {
@@ -243,7 +244,8 @@ export function buildParentReport(student: Student) {
   const valid = student.attempts.filter(attempt => Boolean(skills[attempt.skill]));
   const subjects = ['Maths', 'English Grammar'].map((name, index) => {
     const attempts = valid.filter(attempt => Number(isGrammarTopic(skills[attempt.skill].topic)) === index);
-    const ids = [...new Set(attempts.map(attempt => skills[attempt.skill].topic))];
+    const ids = [...new Set(attempts.map(attempt => skills[attempt.skill].topic))]
+      .sort((a, b) => topicOrder(a) - topicOrder(b));
     const topics = ids.map(id => topicSummary(id, attempts.filter(attempt => skills[attempt.skill].topic === id)));
     const independent = topics.reduce((sum, topic) => sum + topic.independent, 0);
     const correct = topics.reduce((sum, topic) => sum + topic.correct, 0);

@@ -1,6 +1,8 @@
 'use client';
 
 import { createPortal } from 'react-dom';
+import { Fragment } from 'react';
+import { teachingStage } from '../lib/topic-order';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   ArrowRight,
@@ -27,23 +29,6 @@ import {
   type TopicId,
 } from '../lib/learning';
 import './game-chooser.css';
-
-const mathLearningOrder: string[] = [
-  'place-value', 'odd-even', 'roman-numerals', 'addition', 'subtraction', 'mental-maths',
-  'multiply', 'division', 'factors-multiples', 'prime-numbers', 'divisibility', 'hcf', 'lcm',
-  'fractions', 'advanced-fractions', 'decimals', 'advanced-decimals', 'percentages', 'ratio',
-  'money', 'profit-loss', 'interest', 'financial-maths', 'measurement', 'mixed-units', 'time',
-  'negative-numbers', 'temperature', 'geometry', 'lines', 'symmetry', 'coordinates',
-  'transformations', 'area-volume', 'scale-drawings', 'data', 'advanced-data', 'patterns',
-  'order-operations', 'algebra', 'speed', 'probability', 'reasoning'
-];
-const englishLearningOrder: string[] = [
-  'english-nouns', 'english-articles', 'english-pronouns', 'english-verbs', 'english-adjectives',
-  'english-adverbs', 'english-determiners', 'english-agreement', 'english-prepositions',
-  'english-conjunctions', 'english-tenses', 'english-subject-predicate', 'english-sentences',
-  'english-sentence-types', 'english-punctuation', 'english-possessives', 'english-direct-speech',
-  'english-editing'
-];
 
 type Game = 'level' | 'sprint' | 'arena';
 
@@ -98,8 +83,8 @@ export default function GameChooser({
     () => false
   );
 
-  const mathTopics = topics.filter((topic) => !isGrammarTopic(topic.id)).sort((a,b) => mathLearningOrder.indexOf(a.id) - mathLearningOrder.indexOf(b.id));
-  const grammarTopics = topics.filter((topic) => topic.id.startsWith('english-') && !['english-modifiers', 'english-connectives'].includes(topic.id)).sort((a,b) => englishLearningOrder.indexOf(a.id) - englishLearningOrder.indexOf(b.id));
+  const mathTopics = topics.filter((topic) => !isGrammarTopic(topic.id));
+  const grammarTopics = topics.filter((topic) => topic.id.startsWith('english-') && !['english-modifiers', 'english-connectives'].includes(topic.id));
   const englishTopic = topics.find((topic) => topic.id === 'english')!;
   const visibleTopics = (subjectLevel === 'grammar-topics' ? grammarTopics : mathTopics).filter(topic => {
     const concepts = skillsForTopic(topic.id).map(index => skills[index].name).join(' ');
@@ -831,7 +816,7 @@ export default function GameChooser({
               <p>
                 {subjectLevel === 'subjects'
                   ? 'Choose a subject, then pick what you want to practise.'
-                  : 'Choose the topic you want to explore.'}
+                  : 'Start with the foundations and build from there. Choose any topic, or revisit one.'}
               </p>
               {subjectLevel !== 'subjects' && <label className="topic-search">
                 Find a topic
@@ -873,7 +858,7 @@ export default function GameChooser({
                     </button>
                   </>
                 ) : (
-                  visibleTopics.map((topic) => {
+                  visibleTopics.map((topic, index) => {
                     const indices = skillsForTopic(topic.id);
                     const count = indices.reduce(
                       (n, i) =>
@@ -883,9 +868,12 @@ export default function GameChooser({
                     const solid = indices.filter(
                       (i) => stats(attempts, i).mastered
                     ).length;
+                    const stage = teachingStage(topic.id);
+                    const showStage = index === 0 || stage !== teachingStage(visibleTopics[index - 1].id);
                     return (
+                      <Fragment key={topic.id}>
+                      {showStage && <h3 className="topic-teaching-stage">{stage?.name || 'More topics'}</h3>}
                       <button
-                        key={topic.id}
                         type="button"
                         className={`topic-pick-card topic-${topic.color}`}
                         onClick={() => chooseTopic(topic.id)}
@@ -902,6 +890,7 @@ export default function GameChooser({
                         </span>
                         <ArrowRight size={18} />
                       </button>
+                      </Fragment>
                     );
                   })
                 )}
