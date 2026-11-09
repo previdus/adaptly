@@ -79,7 +79,22 @@ jobs:
             exit 1
           fi
 
-          remote_command='set -euo pipefail; cd /opt/adaptly; git fetch --depth=1 origin main; git reset --hard origin/main; bash scripts/deploy-aws-poc.sh'
+          remote_command="$(cat <<'REMOTE'
+          set -euo pipefail
+          # Recover enough headroom to fetch the new preflight script even if the
+          # previous build filled the host disk. Never prune persistent volumes.
+          free_kb=$(df -Pk / | awk 'NR == 2 {print $4}')
+          free_inodes=$(df -Pi / | awk 'NR == 2 {print $4}')
+          if (( free_kb < 1048576 || free_inodes < 15000 )); then
+            docker builder prune --all --force
+            docker image prune --force
+          fi
+          cd /opt/adaptly
+          git fetch --depth=1 origin main
+          git reset --hard origin/main
+          bash scripts/deploy-aws-poc.sh
+          REMOTE
+          )"
           parameters="$(jq -cn --arg command "$remote_command" '{commands: [$command]}')"
           command_id="$(aws ssm send-command \
             --instance-ids "$instance_id" \
@@ -98,11 +113,12 @@ jobs:
             status="$(jq -r '.Status // "Pending"' <<< "$invocation")"
             case "$status" in
               Success)
+                jq -r '.StandardOutputContent, .StandardErrorContent' <<< "$invocation"
                 echo "Adaptly is healthy on ${instance_id}."
                 exit 0
                 ;;
               Failed|TimedOut|Cancelled|Cancelling)
-                jq -r '.StatusDetails, .StandardErrorContent' <<< "$invocation" >&2
+                jq -r '.StatusDetails, .StandardOutputContent, .StandardErrorContent' <<< "$invocation" >&2
                 exit 1
                 ;;
             esac

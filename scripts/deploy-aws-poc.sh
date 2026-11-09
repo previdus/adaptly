@@ -3,6 +3,10 @@ set -euo pipefail
 
 cd /opt/adaptly
 
+source scripts/prepare-docker-build.sh
+prepare_docker_build
+echo "Deploying Adaptly revision $(git rev-parse HEAD)."
+
 rollback_image=adaptly-poc:rollback
 if docker image inspect adaptly-poc:latest >/dev/null 2>&1; then
   docker tag adaptly-poc:latest "$rollback_image"
